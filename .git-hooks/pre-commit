@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eo pipefail
+
+CHANGED_FILES=$(git diff --name-only --cached --diff-filter=ACMR)
+
+
+echo "CHANGED FILES: ${CHANGED_FILES}"
+
+# Get only changed files that match our file suffix pattern
+get_pattern_files() {
+    pattern=$(echo "$*" | sed "s/ /\$\\\|/g")
+    echo "$CHANGED_FILES" | { grep "$pattern$" || true; }
+}
+
+# Get all changed rust files
+RS_FILES=$(get_pattern_files .rs)
+
+just format --check -- ${RS_FILES}
