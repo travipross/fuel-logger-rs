@@ -47,3 +47,4 @@ alias lint := check
 alias cl := clean
 alias f := fmt
 alias format := fmt
+alias w := watch

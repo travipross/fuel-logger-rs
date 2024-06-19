@@ -2,6 +2,6 @@ pub mod log_record;
 pub mod person;
 pub mod vehicle;
 
-pub use log_record::{LogRecord, LogType};
-pub use person::Person;
-pub use vehicle::{OdometerUnit, Vehicle};
+pub use log_record::*;
+pub use person::*;
+pub use vehicle::*;
