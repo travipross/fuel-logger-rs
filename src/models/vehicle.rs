@@ -3,6 +3,7 @@ use fake::Dummy;
 use serde::Serialize;
 
 use super::OdometerKms;
+use fake::faker::company::en::{Buzzword, CompanyName};
 
 #[allow(dead_code)]
 #[derive(Debug, Serialize, Dummy)]
@@ -12,13 +13,13 @@ pub enum OdometerUnit {
 }
 
 #[derive(Debug, Serialize, Dummy)]
-pub struct VehicleMake(pub String);
+pub struct VehicleMake(#[dummy(faker = "CompanyName()")] pub String);
 
 #[derive(Debug, Serialize, Dummy)]
-pub struct VehicleModel(pub String);
+pub struct VehicleModel(#[dummy(faker = "Buzzword()")] pub String);
 
 #[derive(Debug, Serialize, Dummy)]
-pub struct VehicleYear(pub u16);
+pub struct VehicleYear(#[dummy(faker = "1950..2030")] pub u16);
 
 #[allow(dead_code)]
 #[derive(Debug, Serialize, Dummy)]
