@@ -11,12 +11,21 @@ pub enum OdometerUnit {
     Imperial,
 }
 
+#[derive(Debug, Serialize, Dummy)]
+pub struct VehicleMake(pub String);
+
+#[derive(Debug, Serialize, Dummy)]
+pub struct VehicleModel(pub String);
+
+#[derive(Debug, Serialize, Dummy)]
+pub struct VehicleYear(pub u16);
+
 #[allow(dead_code)]
 #[derive(Debug, Serialize, Dummy)]
 pub struct Vehicle {
-    make: String,
-    model: String,
-    year: u16,
+    make: VehicleMake,
+    model: VehicleModel,
+    year: VehicleYear,
     owner: Person,
     odometer_unit: OdometerUnit,
     logs: Vec<LogRecord>,
@@ -24,9 +33,9 @@ pub struct Vehicle {
 
 impl Vehicle {
     pub fn new(
-        make: String,
-        model: String,
-        year: u16,
+        make: VehicleMake,
+        model: VehicleModel,
+        year: VehicleYear,
         owner: Person,
         odometer_unit: OdometerUnit,
     ) -> Self {
