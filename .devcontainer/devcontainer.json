@@ -12,7 +12,8 @@
 			"version": "latest",
 			"dockerDashComposeVersion": "v2"
 		},
-		"ghcr.io/georgofenbeck/features/thefuck-homebrew:1": {}
+		"ghcr.io/georgofenbeck/features/thefuck-homebrew:1": {},
+		"ghcr.io/devcontainers/features/github-cli:1": {}
 	},
 
 	// Use 'mounts' to make the cargo cache persistent in a Docker Volume.
