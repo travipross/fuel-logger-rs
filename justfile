@@ -38,6 +38,14 @@ fmt *args:
 clean:
     cargo clean
 
+# Enable git hooks
+enable-git-hooks:
+    git config core.hooksPath .git-hooks
+
+# Disable git hooks
+disable-git-hooks:
+    git config --unset core.hooksPath
+    
 # Aliases
 alias b := build
 alias t := test
