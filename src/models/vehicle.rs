@@ -1,64 +1,125 @@
-use crate::models::{LogRecord, Person};
 use fake::Dummy;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-use super::OdometerKms;
 use fake::faker::company::en::{Buzzword, CompanyName};
+use uuid::Uuid;
 
 #[allow(dead_code)]
-#[derive(Debug, Serialize, Dummy)]
+#[derive(Debug, Serialize, Deserialize, Dummy, Default, PartialEq)]
 pub enum OdometerUnit {
+    #[serde(rename = "km")]
+    #[default]
     Metric,
+    #[serde(rename = "mi")]
     Imperial,
 }
-
-#[derive(Debug, Serialize, Dummy)]
-pub struct VehicleMake(#[dummy(faker = "CompanyName()")] pub String);
-
-#[derive(Debug, Serialize, Dummy)]
-pub struct VehicleModel(#[dummy(faker = "Buzzword()")] pub String);
-
-#[derive(Debug, Serialize, Dummy)]
-pub struct VehicleYear(#[dummy(faker = "1950..2030")] pub u16);
 
 #[allow(dead_code)]
 #[derive(Debug, Serialize, Dummy)]
 pub struct Vehicle {
-    make: VehicleMake,
-    model: VehicleModel,
-    year: VehicleYear,
-    owner: Person,
-    odometer_unit: OdometerUnit,
-    logs: Vec<LogRecord>,
+    pub id: Uuid,
+    #[dummy(faker = "CompanyName()")]
+    pub make: String,
+    #[dummy(faker = "Buzzword()")]
+    pub model: String,
+    #[dummy(faker = "1950..2030")]
+    pub year: u16,
+    #[serde(skip)]
+    pub owner_id: Uuid,
+    pub odometer_unit: OdometerUnit,
 }
 
-impl Vehicle {
-    pub fn new(
-        make: VehicleMake,
-        model: VehicleModel,
-        year: VehicleYear,
-        owner: Person,
-        odometer_unit: OdometerUnit,
-    ) -> Self {
-        Vehicle {
+#[derive(Debug, Deserialize, Dummy, PartialEq)]
+pub struct VehicleInput {
+    #[dummy(faker = "CompanyName()")]
+    pub make: String,
+    #[dummy(faker = "Buzzword()")]
+    pub model: String,
+    #[dummy(faker = "1950..2030")]
+    pub year: u16,
+    pub odometer_unit: Option<OdometerUnit>,
+}
+
+#[cfg(test)]
+mod vehicle_tests {
+    use fake::{Fake, Faker};
+    use serde_json::json;
+
+    use crate::models::{OdometerUnit, Vehicle, VehicleInput};
+
+    #[test]
+    fn vehicle_serializes() {
+        // Arrange
+        let sample_record = Faker.fake::<Vehicle>();
+
+        let expected = json!({
+            "make": sample_record.make,
+            "model": sample_record.model,
+            "year": sample_record.year,
+            "id": sample_record.id,
+            "odometer_unit": sample_record.odometer_unit,
+        });
+
+        // Act
+        let serialized = serde_json::to_value(&sample_record).unwrap();
+
+        // Assert
+        assert_eq!(serialized, expected);
+    }
+
+    #[test]
+    fn vehicle_input_deserializes_with_odometer_unit() {
+        // Arrange
+        let make = Faker.fake::<String>();
+        let model = Faker.fake::<String>();
+        let year = Faker.fake::<u16>();
+        let odometer_unit = Faker.fake::<Option<OdometerUnit>>();
+
+        let json = json!({
+            "make": make,
+            "model": model,
+            "year": year,
+            "odometer_unit": odometer_unit,
+        });
+
+        let expected = VehicleInput {
             make,
             model,
             year,
-            owner,
             odometer_unit,
-            logs: vec![],
-        }
+        };
+
+        // Act
+        let deserialized = serde_json::from_value::<VehicleInput>(json).unwrap();
+
+        // Assert
+        assert_eq!(deserialized, expected);
     }
 
-    pub fn add_record(&mut self, record: LogRecord) {
-        self.logs.push(record);
-    }
+    #[test]
+    fn vehicle_input_deserializes_with_no_odometer_unit() {
+        // Arrange
+        let make = Faker.fake::<String>();
+        let model = Faker.fake::<String>();
+        let year = Faker.fake::<u16>();
 
-    pub fn get_current_odo(&mut self) -> OdometerKms {
-        self.logs.sort_by_key(|l| l.odometer);
-        match self.logs.last() {
-            Some(record) => record.odometer,
-            None => OdometerKms(0),
-        }
+        let json = json!({
+            "make": make,
+            "model": model,
+            "year": year,
+        });
+
+        let expected = VehicleInput {
+            make,
+            model,
+            year,
+            odometer_unit: None,
+        };
+
+        // Act
+        let deserialized = serde_json::from_value::<VehicleInput>(json).unwrap();
+
+        // Assert
+        assert_eq!(deserialized, expected);
     }
 }
