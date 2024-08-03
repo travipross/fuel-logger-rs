@@ -3,6 +3,48 @@ use fake::Dummy;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+#[derive(Debug, Serialize, Deserialize, Dummy, Clone, PartialEq)]
+#[serde(tag = "rotation_type")]
+#[serde(rename_all = "snake_case")]
+pub enum TireRotationType {
+    FrontRear,
+    Side,
+    Diagonal,
+}
+
+#[derive(Debug, Serialize, Deserialize, Dummy, Clone, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum TireType {
+    Summer,
+    Winter,
+    AllSeason,
+}
+
+#[derive(Debug, Serialize, Deserialize, Dummy, Clone, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum BrakeLocation {
+    Front,
+    Rear,
+    All,
+}
+
+#[derive(Debug, Serialize, Deserialize, Dummy, Clone, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum BrakeComponent {
+    Rotors,
+    Calipers,
+    Both,
+}
+
+#[derive(Debug, Serialize, Deserialize, Dummy, Clone, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum FluidType {
+    Wiper,
+    Transmission,
+    Brake,
+    Coolant,
+}
+
 #[allow(dead_code)]
 #[derive(Debug, Serialize, PartialEq, Deserialize, Dummy, Clone)]
 #[serde(rename_all = "snake_case")]
@@ -12,13 +54,24 @@ pub enum LogType {
         #[dummy(faker = "5.0..120.0")]
         fuel_amount: f32,
     },
-    // TireRotation,
-    // TireChange,
-    // OilChange,
-    // Repair,
-    // WiperBladeReplacement,
-    // BatteryReplacement,
-    // Brakes
+    TireRotation(TireRotationType),
+    TireChange {
+        #[serde(flatten)]
+        rotation: Option<TireRotationType>,
+        tire_type: TireType,
+        new: bool,
+    },
+    OilChange,
+    Repair {
+        notes: String,
+    },
+    WiperBladeReplacement,
+    BatteryReplacement,
+    BrakeReplacement {
+        location: BrakeLocation,
+        component: BrakeComponent,
+    },
+    Fluids(FluidType),
 }
 
 #[derive(Debug, Serialize, Dummy, PartialEq, Clone)]
@@ -59,7 +112,11 @@ mod log_record_tests {
             ..Faker.fake()
         };
 
-        let LogType::FuelUp { fuel_amount } = sample_record.log_type;
+        let fuel_amount = if let LogType::FuelUp { fuel_amount } = sample_record.log_type {
+            fuel_amount
+        } else {
+            unreachable!()
+        };
 
         #[allow(irrefutable_let_patterns)]
         let expected = json!({
