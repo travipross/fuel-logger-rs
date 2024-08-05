@@ -1,7 +1,7 @@
 pub mod log_record;
-pub mod person;
+pub mod user;
 pub mod vehicle;
 
 pub use log_record::*;
-pub use person::*;
+pub use user::*;
 pub use vehicle::*;

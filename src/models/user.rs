@@ -5,7 +5,7 @@ use serde::Serialize;
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Dummy)]
-pub struct Person {
+pub struct User {
     pub id: Uuid,
     #[dummy(faker = "FirstName()")]
     pub first_name: String,

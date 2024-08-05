@@ -1,7 +1,11 @@
-use fake::Dummy;
-use serde::{Deserialize, Serialize};
+use std::{error::Error, str::FromStr};
 
+use fake::Dummy;
+use serde::{de, Deserialize, Serialize};
+
+use anyhow::anyhow;
 use fake::faker::company::en::{Buzzword, CompanyName};
+use sqlx::{postgres::PgArguments, Decode, Encode, Postgres};
 use uuid::Uuid;
 
 #[allow(dead_code)]
@@ -14,8 +18,47 @@ pub enum OdometerUnit {
     Imperial,
 }
 
+impl FromStr for OdometerUnit {
+    type Err = anyhow::Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "km" => Ok(Self::Metric),
+            "mi" => Ok(Self::Imperial),
+            _ => Err(anyhow!("Invalid type")),
+        }
+    }
+}
+
+impl ToString for OdometerUnit {
+    fn to_string(&self) -> String {
+        match self {
+            Self::Metric => "km".to_owned(),
+            Self::Imperial => "mi".to_owned(),
+        }
+    }
+}
+
+impl<'q> Encode<'q, Postgres> for OdometerUnit {
+    fn encode_by_ref(
+        &self,
+        buf: &mut <Postgres as sqlx::Database>::ArgumentBuffer<'q>,
+    ) -> Result<sqlx::encode::IsNull, sqlx::error::BoxDynError> {
+        let val = self.to_string().as_str();
+        <&str as Encode<Postgres>>::encode(val, buf)
+    }
+}
+
+impl<'r> Decode<'r, Postgres> for OdometerUnit {
+    fn decode(
+        value: <Postgres as sqlx::Database>::ValueRef<'r>,
+    ) -> Result<Self, sqlx::error::BoxDynError> {
+        let s = <&str as Decode<Postgres>>::decode(value)?;
+        OdometerUnit::from_str(s).map_err(|err| Box::new(err) as _)
+    }
+}
+
 #[allow(dead_code)]
-#[derive(Debug, Serialize, Dummy)]
+#[derive(Debug, Serialize, Dummy, sqlx::Decode)]
 pub struct Vehicle {
     pub id: Uuid,
     #[dummy(faker = "CompanyName()")]
@@ -23,7 +66,7 @@ pub struct Vehicle {
     #[dummy(faker = "Buzzword()")]
     pub model: String,
     #[dummy(faker = "1950..2030")]
-    pub year: u16,
+    pub year: i32,
     #[serde(skip)]
     pub owner_id: Uuid,
     pub odometer_unit: OdometerUnit,

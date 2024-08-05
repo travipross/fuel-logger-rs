@@ -7,7 +7,10 @@ use chrono::Utc;
 use fake::{Fake, Faker};
 use uuid::Uuid;
 
-use crate::models::{LogRecord, LogRecordInput};
+use crate::{
+    models::{LogRecord, LogRecordInput},
+    AppState,
+};
 
 async fn read(Path(log_record_id): Path<Uuid>) -> Json<LogRecord> {
     println!("Getting vehicle with ID: {log_record_id}");
@@ -45,7 +48,7 @@ async fn update(
     Json(log_record)
 }
 
-pub fn build_router() -> Router {
+pub fn build_router() -> Router<AppState> {
     Router::new()
         .route("/", get(list))
         .route("/", post(create))
