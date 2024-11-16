@@ -1,8 +1,6 @@
 use uuid::Uuid;
 
-use crate::{
-    models::api::CreateVehicleBody as ApiCreateVehicleBody, types::primitives::OdometerUnit,
-};
+use crate::{models::api::CreateVehicleBody as ApiCreateVehicleBody, types::OdometerUnit};
 
 #[derive(Debug, PartialEq, serde::Deserialize, fake::Dummy, sqlx::FromRow)]
 pub struct Vehicle {

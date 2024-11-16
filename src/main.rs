@@ -3,6 +3,7 @@ mod error;
 mod models;
 mod routes;
 mod types;
+mod utils;
 
 use std::{env, time::Duration};
 

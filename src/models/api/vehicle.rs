@@ -1,4 +1,4 @@
-use crate::{error::ApiError, models::db::Vehicle as DbVehicle, types::primitives::OdometerUnit};
+use crate::{error::ApiError, models::db::Vehicle as DbVehicle, types::OdometerUnit};
 use axum::{http::StatusCode, response::IntoResponse, Json};
 use uuid::Uuid;
 
@@ -97,91 +97,254 @@ impl IntoResponse for DeleteVehicleResponse {
 }
 
 #[cfg(test)]
-mod api_type_tests {
+mod serde_tests {
     use super::*;
     use fake::{Fake, Faker};
     use serde_json::json;
 
-    #[test]
-    fn read_vehicle_response_serializes() {
-        // Arrange
-        let sample_record = Faker.fake::<ReadVehicleResponse>();
+    mod create {
+        use super::*;
+        mod request {
+            use super::*;
 
-        let expected = json!({
-            "owner_id": sample_record.owner_id,
-            "make": sample_record.make,
-            "model": sample_record.model,
-            "year": sample_record.year,
-            "id": sample_record.id,
-            "odometer_unit": sample_record.odometer_unit,
-        });
+            #[test]
+            fn deserializes_with_odometer_unit() {
+                // Arrange
+                let mut expected = Faker.fake::<CreateVehicleBody>();
+                expected.odometer_unit = Some(Faker.fake());
 
-        // Act
-        let serialized = serde_json::to_value(&sample_record).unwrap();
+                let json = json!({
+                    "owner_id": expected.owner_id,
+                    "make": expected.make,
+                    "model": expected.model,
+                    "year": expected.year,
+                    "odometer_unit": expected.odometer_unit,
+                });
 
-        // Assert
-        assert_eq!(serialized, expected);
+                // Act
+                let deserialized = serde_json::from_value::<CreateVehicleBody>(json)
+                    .expect("could not deserialize");
+
+                // Assert
+                assert_eq!(deserialized, expected);
+            }
+
+            #[test]
+            fn deserializes_with_no_odometer_unit() {
+                // Arrange
+                let mut expected = Faker.fake::<CreateVehicleBody>();
+                expected.odometer_unit = None;
+
+                let json = json!({
+                    "owner_id": expected.owner_id,
+                    "make": expected.make,
+                    "model": expected.model,
+                    "year": expected.year,
+                    "odometer_unit": expected.odometer_unit,
+                });
+
+                // Act
+                let deserialized = serde_json::from_value::<CreateVehicleBody>(json)
+                    .expect("could not deserialize");
+
+                // Assert
+                assert_eq!(deserialized, expected);
+            }
+        }
+
+        mod response {
+            use super::*;
+
+            #[test]
+            fn serializes_correctly() {
+                // Arrange
+                let sample_record = Faker.fake::<CreateVehicleResponse>();
+                let expected = json!({
+                    "id": sample_record.id
+                });
+
+                // Act
+                let serialized = serde_json::to_value(&sample_record).expect("could not serialize");
+
+                // Assert
+                assert_eq!(serialized, expected);
+            }
+        }
     }
 
-    #[test]
-    fn vehicle_input_deserializes_with_odometer_unit() {
-        // Arrange
-        let make = Faker.fake::<String>();
-        let model = Faker.fake::<String>();
-        let year = Faker.fake::<u16>();
-        let odometer_unit = Faker.fake::<Option<OdometerUnit>>();
-        let owner_id = Faker.fake::<Uuid>();
+    mod read {
+        use super::*;
 
-        let json = json!({
-            "owner_id": owner_id,
-            "make": make,
-            "model": model,
-            "year": year,
-            "odometer_unit": odometer_unit,
-        });
+        mod response {
+            use super::*;
 
-        let expected = CreateVehicleBody {
-            owner_id,
-            make,
-            model,
-            year,
-            odometer_unit,
-        };
+            #[test]
+            fn serializes_correctly() {
+                // Arrange
+                let sample_record = Faker.fake::<ReadVehicleResponse>();
 
-        // Act
-        let deserialized = serde_json::from_value::<CreateVehicleBody>(json).unwrap();
+                let expected = json!({
+                    "owner_id": sample_record.owner_id,
+                    "make": sample_record.make,
+                    "model": sample_record.model,
+                    "year": sample_record.year,
+                    "id": sample_record.id,
+                    "odometer_unit": sample_record.odometer_unit,
+                });
 
-        // Assert
-        assert_eq!(deserialized, expected);
+                // Act
+                let serialized = serde_json::to_value(&sample_record).expect("could not serialize");
+
+                // Assert
+                assert_eq!(serialized, expected);
+            }
+        }
     }
 
-    #[test]
-    fn vehicle_input_deserializes_with_no_odometer_unit() {
-        // Arrange
-        let make = Faker.fake::<String>();
-        let model = Faker.fake::<String>();
-        let year = Faker.fake::<u16>();
-        let owner_id = Faker.fake::<Uuid>();
+    mod list {
+        use super::*;
 
-        let json = json!({
-            "owner_id": owner_id,
-            "make": make,
-            "model": model,
-            "year": year,
-        });
+        mod response {
+            use super::*;
 
-        let expected = CreateVehicleBody {
-            owner_id,
-            make,
-            model,
-            year,
-            odometer_unit: None,
-        };
+            #[test]
+            fn serializes_correctly() {
+                // Arrange
+                let sample_records = Faker.fake::<Vec<ReadVehicleResponse>>();
 
-        // Act
-        let deserialized = serde_json::from_value::<CreateVehicleBody>(json).unwrap();
+                // Act
+                let serialized =
+                    serde_json::to_value(&sample_records).expect("could not serialize");
 
-        // Assert
-        assert_eq!(deserialized, expected);
+                // Assert
+                let mut record_value_array = vec![];
+                for record in sample_records {
+                    record_value_array.push(
+                        serde_json::to_value(record)
+                            .expect("could not serialize individual record"),
+                    );
+                }
+
+                assert_eq!(json!(record_value_array), serialized)
+            }
+        }
+    }
+
+    mod update {
+        use super::*;
+
+        mod request {
+            use super::*;
+            #[test]
+            fn deserializes_with_odometer_unit() {
+                // Arrange
+                let make = Faker.fake::<String>();
+                let model = Faker.fake::<String>();
+                let year = Faker.fake::<u16>();
+                let odometer_unit = Faker.fake::<Option<OdometerUnit>>();
+                let owner_id = Faker.fake::<Uuid>();
+
+                let json = json!({
+                    "owner_id": owner_id,
+                    "make": make,
+                    "model": model,
+                    "year": year,
+                    "odometer_unit": odometer_unit,
+                });
+
+                let expected = UpdateVehicleBody {
+                    owner_id,
+                    make,
+                    model,
+                    year,
+                    odometer_unit,
+                };
+
+                // Act
+                let deserialized = serde_json::from_value::<UpdateVehicleBody>(json)
+                    .expect("could not deserialize");
+
+                // Assert
+                assert_eq!(deserialized, expected);
+            }
+
+            #[test]
+            fn deserializes_with_no_odometer_unit() {
+                // Arrange
+                let make = Faker.fake::<String>();
+                let model = Faker.fake::<String>();
+                let year = Faker.fake::<u16>();
+                let owner_id = Faker.fake::<Uuid>();
+
+                let json = json!({
+                    "owner_id": owner_id,
+                    "make": make,
+                    "model": model,
+                    "year": year,
+                });
+
+                let expected = UpdateVehicleBody {
+                    owner_id,
+                    make,
+                    model,
+                    year,
+                    odometer_unit: None,
+                };
+
+                // Act
+                let deserialized = serde_json::from_value::<UpdateVehicleBody>(json)
+                    .expect("could not deserialize");
+
+                // Assert
+                assert_eq!(deserialized, expected);
+            }
+        }
+
+        mod response {
+            use super::*;
+
+            #[test]
+            fn serializes_correctly() {
+                // Arrange
+                let sample_record = Faker.fake::<UpdateVehicleResponse>();
+
+                let expected = json!({
+                    "owner_id": sample_record.owner_id,
+                    "make": sample_record.make,
+                    "model": sample_record.model,
+                    "year": sample_record.year,
+                    "id": sample_record.id,
+                    "odometer_unit": sample_record.odometer_unit,
+                });
+
+                // Act
+                let serialized = serde_json::to_value(&sample_record).expect("could not serialize");
+
+                // Assert
+                assert_eq!(serialized, expected);
+            }
+        }
+    }
+
+    mod delete {
+        use super::*;
+
+        mod response {
+            use super::*;
+
+            #[test]
+            fn serializes_correctly() {
+                // Arrange
+                let sample_record = Faker.fake::<DeleteVehicleResponse>();
+
+                let expected = serde_json::Value::Null;
+
+                // Act
+                let serialized = serde_json::to_value(&sample_record).expect("could not serialize");
+
+                // Assert
+                assert_eq!(serialized, expected);
+            }
+        }
     }
 }
