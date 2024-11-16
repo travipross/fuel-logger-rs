@@ -1,4 +1,5 @@
 use crate::{models::api::CreateLogRecordBody as ApiCreateLogRecordBody, types::LogType};
+use chrono::{DateTime, Utc};
 use sqlx::{postgres::PgRow, FromRow, Row};
 use uuid::Uuid;
 
@@ -6,7 +7,7 @@ use uuid::Uuid;
 pub struct LogRecord {
     pub id: Uuid,
     pub vehicle_id: Uuid,
-    pub date: chrono::DateTime<chrono::Utc>,
+    pub date: DateTime<Utc>,
     #[sqlx(flatten)]
     pub log_type: LogType,
     pub odometer: i32,
@@ -18,7 +19,7 @@ impl LogRecord {
         Self {
             id: *log_record_id,
             vehicle_id: body.vehicle_id,
-            date: body.date.unwrap_or_else(chrono::Utc::now),
+            date: body.date.unwrap_or_else(Utc::now),
             log_type: body.log_type,
             odometer: body.odometer.into(),
             notes: body.notes,
@@ -29,7 +30,7 @@ impl LogRecord {
 impl<'r> FromRow<'r, PgRow> for LogRecord {
     fn from_row(row: &'r PgRow) -> Result<Self, sqlx::Error> {
         let id: Uuid = row.try_get("id")?;
-        let date: chrono::DateTime<chrono::Utc> = row.try_get("log_date")?;
+        let date: DateTime<Utc> = row.try_get("log_date")?;
         let vehicle_id: Uuid = row.try_get("vehicle_id")?;
         let odometer: u16 = row.try_get::<i32, _>("odometer")?.try_into().map_err(|e| {
             sqlx::Error::ColumnDecode {

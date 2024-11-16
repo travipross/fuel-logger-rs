@@ -1,9 +1,11 @@
 - [x] Make controllers take API models as inputs
-- [ ] Rewrite db models to better reflect table structure
-- [ ] Add tracing
-- [ ] Write custom JSON extractor to better handle errors
-- [ ] unit tests
+- [x] unit tests
     - [x] api serialization/deserialization
-    - [ ] database read/write
-- [ ] integration tests
+    - [x] database read/write
+- [ ] integration tests (against actual api)
+- [ ] Add tracing
 - [ ] docstrings everywhere
+- [ ] Write custom JSON extractor to better handle deserialization errors
+- [ ] newtypes for common fields
+- [ ] Rewrite db models to better reflect table structure
+- [ ] define database enums

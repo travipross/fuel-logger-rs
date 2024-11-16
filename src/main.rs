@@ -8,7 +8,7 @@ mod utils;
 use std::{env, time::Duration};
 
 use anyhow::Context;
-use axum::{routing::get, Router};
+use axum::{routing::get, serve, Router};
 use routes::{log_records, users, vehicles};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
@@ -45,7 +45,7 @@ async fn main() -> anyhow::Result<()> {
         .await
         .context("failed to create TCP listener")?;
     println!("Running on: localhost:{port}");
-    axum::serve(listener, app)
+    serve(listener, app)
         .await
         .context("failed to serve axum app")?;
     Ok(())

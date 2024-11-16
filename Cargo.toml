@@ -3,8 +3,6 @@ name = "fuel-logger-rs"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 anyhow = "1.0.86"
 axum = "0.7.5"
@@ -24,7 +22,11 @@ sqlx = { version = "0.8.0", features = [
     "uuid",
     "chrono",
 ] }
-test-case = "3.3.1"
 thiserror = "2.0.1"
 tokio = { version = "1.38.0", features = ["macros", "rt-multi-thread"] }
 uuid = { version = "1.10.0", features = ["v4", "serde"] }
+
+[dev-dependencies]
+approx = "0.5.1"
+itertools = "0.13.0"
+test-case = "3.3.1"

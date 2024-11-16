@@ -1,9 +1,15 @@
-use axum::{http::StatusCode, response::IntoResponse, Json};
+use std::ops::Deref;
+
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    Json,
+};
 use uuid::Uuid;
 
 use crate::models::db::User as DbUser;
 
-#[derive(Debug, PartialEq, serde::Deserialize, fake::Dummy)]
+#[derive(Debug, Clone, PartialEq, serde::Deserialize, fake::Dummy)]
 pub struct CreateUserBody {
     #[dummy(faker = "fake::faker::name::en::FirstName()")]
     pub first_name: String,
@@ -15,13 +21,13 @@ pub struct CreateUserBody {
     pub email: String,
 }
 
-#[derive(Debug, serde::Serialize, fake::Dummy)]
+#[derive(Debug, Clone, serde::Serialize, fake::Dummy)]
 pub struct CreateUserResponse {
     pub id: Uuid,
 }
 
 impl IntoResponse for CreateUserResponse {
-    fn into_response(self) -> axum::response::Response {
+    fn into_response(self) -> Response {
         (
             StatusCode::CREATED,
             [("location", format!("/users/{}", self.id).as_str())],
@@ -31,7 +37,7 @@ impl IntoResponse for CreateUserResponse {
     }
 }
 
-#[derive(Debug, serde::Serialize, fake::Dummy)]
+#[derive(Debug, Clone, serde::Serialize, fake::Dummy)]
 pub struct ReadUserResponse {
     pub id: Uuid,
     #[dummy(faker = "fake::faker::name::en::FirstName()")]
@@ -45,7 +51,7 @@ pub struct ReadUserResponse {
 }
 
 impl IntoResponse for ReadUserResponse {
-    fn into_response(self) -> axum::response::Response {
+    fn into_response(self) -> Response {
         (StatusCode::OK, Json(self)).into_response()
     }
 }
@@ -62,11 +68,19 @@ impl From<DbUser> for ReadUserResponse {
     }
 }
 
-#[derive(Debug, serde::Serialize, fake::Dummy)]
+#[derive(Debug, Clone, serde::Serialize, fake::Dummy)]
 pub struct ListUsersResponse(Vec<ReadUserResponse>);
 
+impl Deref for ListUsersResponse {
+    type Target = Vec<ReadUserResponse>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 impl IntoResponse for ListUsersResponse {
-    fn into_response(self) -> axum::response::Response {
+    fn into_response(self) -> Response {
         (StatusCode::OK, Json(self)).into_response()
     }
 }
@@ -79,11 +93,11 @@ impl FromIterator<ReadUserResponse> for ListUsersResponse {
 pub type UpdateUserBody = CreateUserBody;
 pub type UpdateUserResponse = ReadUserResponse;
 
-#[derive(Debug, serde::Serialize, fake::Dummy)]
+#[derive(Debug, Clone, serde::Serialize, fake::Dummy)]
 pub struct DeleteUserResponse;
 
 impl IntoResponse for DeleteUserResponse {
-    fn into_response(self) -> axum::response::Response {
+    fn into_response(self) -> Response {
         (StatusCode::NO_CONTENT).into_response()
     }
 }

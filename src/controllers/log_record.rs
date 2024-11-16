@@ -216,3 +216,157 @@ pub async fn delete(
         .await
         .map(|_| DeleteLogRecordResponse)?)
 }
+
+#[cfg(test)]
+mod database_tests {
+    use super::*;
+    use crate::utils::test_utils::db::seed_user_and_vehicle;
+    use fake::{Fake, Faker};
+    use itertools::izip;
+
+    #[sqlx::test]
+    async fn can_create_and_read(pool: PgPool) {
+        // Arrange
+        let vehicle_id = seed_user_and_vehicle(&pool).await;
+        let date = Faker.fake();
+        let notes = Faker.fake();
+        let log_record_body = CreateLogRecordBody {
+            date: Some(date),
+            notes,
+            vehicle_id,
+            ..Faker.fake()
+        };
+
+        // Act
+        let res = create(&pool, log_record_body.clone())
+            .await
+            .expect("could not create resource");
+        let created_result = read(&pool, &res.id).await.expect("could not read resource");
+
+        // Assert
+        assert_eq!(
+            created_result.date.timestamp_millis(),
+            date.timestamp_millis()
+        );
+        assert_eq!(created_result.vehicle_id, log_record_body.vehicle_id);
+        assert_eq!(created_result.log_type, log_record_body.log_type);
+        assert_eq!(created_result.odometer, log_record_body.odometer);
+        assert_eq!(created_result.notes, log_record_body.notes);
+    }
+
+    #[sqlx::test]
+    async fn can_create_and_list(pool: PgPool) {
+        // Arrange
+        let date_1 = Faker.fake();
+        let date_2 = Faker.fake();
+
+        let notes_1 = Faker.fake();
+        let notes_2 = Faker.fake();
+
+        let vehicle_id = seed_user_and_vehicle(&pool).await;
+        let log_record_body_1 = CreateLogRecordBody {
+            notes: notes_1,
+            date: Some(date_1),
+            vehicle_id,
+            ..Faker.fake()
+        };
+        let log_record_body_2 = UpdateLogRecordBody {
+            notes: notes_2,
+            date: Some(date_2),
+            vehicle_id,
+            ..Faker.fake()
+        };
+
+        // Act
+        create(&pool, log_record_body_1.clone())
+            .await
+            .expect("could not create resource");
+        create(&pool, log_record_body_2.clone())
+            .await
+            .expect("could not create resource");
+        let created_result = list(&pool).await.expect("could not list resources");
+
+        // Assert
+        assert_eq!(created_result.len(), 2);
+        for (created_item, body_item, date_item) in izip!(
+            created_result,
+            vec![log_record_body_1, log_record_body_2],
+            vec![date_1, date_2]
+        ) {
+            assert_eq!(
+                created_item.date.timestamp_millis(),
+                date_item.timestamp_millis()
+            );
+            assert_eq!(created_item.vehicle_id, body_item.vehicle_id);
+            assert_eq!(created_item.log_type, body_item.log_type);
+            assert_eq!(created_item.odometer, body_item.odometer);
+            assert_eq!(created_item.notes, body_item.notes);
+        }
+    }
+
+    #[sqlx::test]
+    async fn can_update(pool: PgPool) {
+        // Arrange
+        let vehicle_id = seed_user_and_vehicle(&pool).await;
+        let date = Faker.fake();
+        let notes = Faker.fake();
+        let log_type = Faker.fake::<LogType>();
+        let initial_log_record_body = CreateLogRecordBody {
+            vehicle_id,
+            log_type: log_type.clone(),
+            ..Faker.fake()
+        };
+        let updated_log_record_body = CreateLogRecordBody {
+            date: Some(date),
+            notes,
+            log_type,
+            vehicle_id,
+            ..Faker.fake()
+        };
+
+        // Act
+        let res = create(&pool, initial_log_record_body.clone())
+            .await
+            .expect("could not create resource");
+        let updated_result = update(&pool, &res.id, updated_log_record_body.clone())
+            .await
+            .expect("could not update resource");
+
+        // Assert
+        assert_eq!(
+            updated_result.date.timestamp_millis(),
+            date.timestamp_millis()
+        );
+        assert_eq!(
+            updated_result.vehicle_id,
+            updated_log_record_body.vehicle_id
+        );
+        assert_eq!(updated_result.notes, updated_log_record_body.notes);
+        assert_eq!(updated_result.odometer, updated_log_record_body.odometer);
+        assert_eq!(updated_result.log_type, updated_log_record_body.log_type);
+    }
+
+    #[sqlx::test]
+    async fn can_delete(pool: PgPool) {
+        // Arrange
+        let vehicle_id = seed_user_and_vehicle(&pool).await;
+        let log_record_body = CreateLogRecordBody {
+            vehicle_id,
+            ..Faker.fake()
+        };
+
+        // Act
+        let res = create(&pool, log_record_body.clone())
+            .await
+            .expect("could not create resource");
+        read(&pool, &res.id).await.expect("could not read resource");
+        delete(&pool, &res.id)
+            .await
+            .expect("could not read resource");
+        let created_result = read(&pool, &res.id)
+            .await
+            .expect_err("expected_failure_did_not_occur");
+
+        assert!(matches!(created_result, ApiError::ResourceNotFound));
+    }
+}

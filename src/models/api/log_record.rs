@@ -1,11 +1,18 @@
+use std::ops::Deref;
+
 use crate::{error::ApiError, models::db::LogRecord as DbLogRecord, types::log_type::LogType};
-use axum::{http::StatusCode, response::IntoResponse, Json};
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    Json,
+};
+use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 // Create
-#[derive(Debug, PartialEq, serde::Deserialize, fake::Dummy)]
+#[derive(Debug, Clone, PartialEq, serde::Deserialize, fake::Dummy)]
 pub struct CreateLogRecordBody {
-    pub date: Option<chrono::DateTime<chrono::Utc>>,
+    pub date: Option<DateTime<Utc>>,
     pub vehicle_id: Uuid,
     #[serde(flatten)]
     pub log_type: LogType,
@@ -14,13 +21,13 @@ pub struct CreateLogRecordBody {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, serde::Serialize, fake::Dummy)]
+#[derive(Debug, Clone, serde::Serialize, fake::Dummy)]
 pub struct CreateLogRecordResponse {
     pub id: Uuid,
 }
 
 impl IntoResponse for CreateLogRecordResponse {
-    fn into_response(self) -> axum::response::Response {
+    fn into_response(self) -> Response {
         (
             StatusCode::CREATED,
             [("location", format!("/log_records/{}", self.id))],
@@ -31,11 +38,11 @@ impl IntoResponse for CreateLogRecordResponse {
 }
 
 // Read
-#[derive(Debug, PartialEq, serde::Serialize, fake::Dummy)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, fake::Dummy)]
 pub struct ReadLogRecordResponse {
     pub id: Uuid,
     pub vehicle_id: Uuid,
-    pub date: chrono::DateTime<chrono::Utc>,
+    pub date: DateTime<Utc>,
     #[serde(flatten)]
     pub log_type: LogType,
     #[dummy(faker = "0..500000")]
@@ -44,17 +51,35 @@ pub struct ReadLogRecordResponse {
 }
 
 impl IntoResponse for ReadLogRecordResponse {
-    fn into_response(self) -> axum::response::Response {
+    fn into_response(self) -> Response {
         (StatusCode::OK, Json(self)).into_response()
     }
 }
 
 // List
-#[derive(Debug, serde::Serialize, fake::Dummy)]
+#[derive(Debug, Clone, serde::Serialize, fake::Dummy)]
 pub struct ListLogRecordsResponse(Vec<ReadLogRecordResponse>);
 
+impl Deref for ListLogRecordsResponse {
+    type Target = Vec<ReadLogRecordResponse>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl IntoIterator for ListLogRecordsResponse {
+    type Item = ReadLogRecordResponse;
+
+    type IntoIter = <Vec<ReadLogRecordResponse> as IntoIterator>::IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
 impl IntoResponse for ListLogRecordsResponse {
-    fn into_response(self) -> axum::response::Response {
+    fn into_response(self) -> Response {
         (StatusCode::OK, Json(self)).into_response()
     }
 }
@@ -85,11 +110,11 @@ pub type UpdateLogRecordBody = CreateLogRecordBody;
 pub type UpdateLogRecordResponse = ReadLogRecordResponse;
 
 // Delete
-#[derive(Debug, serde::Serialize, fake::Dummy)]
+#[derive(Debug, Clone, serde::Serialize, fake::Dummy)]
 pub struct DeleteLogRecordResponse;
 
 impl IntoResponse for DeleteLogRecordResponse {
-    fn into_response(self) -> axum::response::Response {
+    fn into_response(self) -> Response {
         (StatusCode::NO_CONTENT).into_response()
     }
 }

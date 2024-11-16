@@ -1,9 +1,15 @@
+use std::ops::Deref;
+
 use crate::{error::ApiError, models::db::Vehicle as DbVehicle, types::OdometerUnit};
-use axum::{http::StatusCode, response::IntoResponse, Json};
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    Json,
+};
 use uuid::Uuid;
 
 // Create
-#[derive(Debug, serde::Deserialize, fake::Dummy, PartialEq)]
+#[derive(Debug, Clone, serde::Deserialize, fake::Dummy, PartialEq)]
 pub struct CreateVehicleBody {
     pub owner_id: Uuid,
     #[dummy(faker = "fake::faker::company::en::CompanyName()")]
@@ -15,13 +21,13 @@ pub struct CreateVehicleBody {
     pub odometer_unit: Option<OdometerUnit>,
 }
 
-#[derive(Debug, serde::Serialize, fake::Dummy)]
+#[derive(Debug, Clone, serde::Serialize, fake::Dummy)]
 pub struct CreateVehicleResponse {
     pub id: Uuid,
 }
 
 impl IntoResponse for CreateVehicleResponse {
-    fn into_response(self) -> axum::response::Response {
+    fn into_response(self) -> Response {
         (
             StatusCode::CREATED,
             [("location", format!("/vehicles/{}", self.id))],
@@ -32,7 +38,7 @@ impl IntoResponse for CreateVehicleResponse {
 }
 
 // Read
-#[derive(Debug, serde::Serialize, fake::Dummy)]
+#[derive(Debug, Clone, serde::Serialize, fake::Dummy)]
 pub struct ReadVehicleResponse {
     pub id: Uuid,
     pub owner_id: Uuid,
@@ -61,14 +67,22 @@ impl TryFrom<DbVehicle> for ReadVehicleResponse {
 }
 
 impl IntoResponse for ReadVehicleResponse {
-    fn into_response(self) -> axum::response::Response {
+    fn into_response(self) -> Response {
         (StatusCode::OK, Json(self)).into_response()
     }
 }
 
 // List
-#[derive(Debug, serde::Serialize, fake::Dummy)]
+#[derive(Debug, Clone, serde::Serialize, fake::Dummy)]
 pub struct ListVehiclesResponse(Vec<ReadVehicleResponse>);
+
+impl Deref for ListVehiclesResponse {
+    type Target = Vec<ReadVehicleResponse>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 impl FromIterator<ReadVehicleResponse> for ListVehiclesResponse {
     fn from_iter<T: IntoIterator<Item = ReadVehicleResponse>>(iter: T) -> Self {
@@ -77,7 +91,7 @@ impl FromIterator<ReadVehicleResponse> for ListVehiclesResponse {
 }
 
 impl IntoResponse for ListVehiclesResponse {
-    fn into_response(self) -> axum::response::Response {
+    fn into_response(self) -> Response {
         (StatusCode::OK, Json(self)).into_response()
     }
 }
@@ -87,11 +101,11 @@ pub type UpdateVehicleBody = CreateVehicleBody;
 pub type UpdateVehicleResponse = ReadVehicleResponse;
 
 // Delete
-#[derive(Debug, serde::Serialize, fake::Dummy)]
+#[derive(Debug, Clone, serde::Serialize, fake::Dummy)]
 pub struct DeleteVehicleResponse;
 
 impl IntoResponse for DeleteVehicleResponse {
-    fn into_response(self) -> axum::response::Response {
+    fn into_response(self) -> Response {
         (StatusCode::NO_CONTENT).into_response()
     }
 }

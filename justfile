@@ -135,8 +135,12 @@ init-env:
     {
         "rust-analyzer.cargo.extraEnv": {
             "DATABASE_URL": "${DATABASE_URL}"
+        },
+        "rust-analyzer.runnables.extraEnv": {
+            "DATABASE_URL": "${DATABASE_URL}"
         }
     }
+    
     EOF)
 
         if [ -f ".vscode/settings.json" ]; then

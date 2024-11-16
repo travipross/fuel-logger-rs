@@ -91,3 +91,93 @@ pub async fn delete(pool: &PgPool, user_id: &Uuid) -> Result<DeleteUserResponse,
         Ok(DeleteUserResponse)
     }
 }
+
+#[cfg(test)]
+mod database_tests {
+    use super::*;
+    use fake::{Fake, Faker};
+
+    #[sqlx::test]
+    async fn can_create_and_read(pool: PgPool) {
+        // Arrange
+        let user_body = Faker.fake::<CreateUserBody>();
+
+        // Act
+        let res = create(&pool, user_body.clone())
+            .await
+            .expect("could not create resource");
+        let created_result = read(&pool, &res.id).await.expect("could not read resource");
+
+        // Assert
+        assert_eq!(created_result.first_name, user_body.first_name);
+        assert_eq!(created_result.last_name, user_body.last_name);
+        assert_eq!(created_result.username, user_body.username);
+        assert_eq!(created_result.email, user_body.email);
+    }
+
+    #[sqlx::test]
+    async fn can_create_and_list(pool: PgPool) {
+        // Arrange
+        let user_body_1 = Faker.fake::<CreateUserBody>();
+        let user_body_2 = Faker.fake::<CreateUserBody>();
+
+        // Act
+        create(&pool, user_body_1.clone())
+            .await
+            .expect("could not create resource");
+        create(&pool, user_body_2.clone())
+            .await
+            .expect("could not create resource");
+        let created_result = list(&pool).await.expect("could not list resources");
+
+        // Assert
+        assert_eq!(created_result.len(), 2);
+        for (created_item, body_item) in created_result.iter().zip(vec![user_body_1, user_body_2]) {
+            assert_eq!(created_item.first_name, body_item.first_name);
+            assert_eq!(created_item.last_name, body_item.last_name);
+            assert_eq!(created_item.username, body_item.username);
+            assert_eq!(created_item.email, body_item.email);
+        }
+    }
+
+    #[sqlx::test]
+    async fn can_update(pool: PgPool) {
+        // Arrange
+        let initial_user_body = Faker.fake::<CreateUserBody>();
+        let updated_user_body = Faker.fake::<UpdateUserBody>();
+
+        // Act
+        let res = create(&pool, initial_user_body.clone())
+            .await
+            .expect("could not create resource");
+        let updated_result = update(&pool, &res.id, updated_user_body.clone())
+            .await
+            .expect("could not update resource");
+
+        // Assert
+        assert_eq!(updated_result.first_name, updated_user_body.first_name);
+        assert_eq!(updated_result.last_name, updated_user_body.last_name);
+        assert_eq!(updated_result.username, updated_user_body.username);
+        assert_eq!(updated_result.email, updated_user_body.email);
+    }
+
+    #[sqlx::test]
+    async fn can_delete(pool: PgPool) {
+        // Arrange
+        let user_body = Faker.fake::<CreateUserBody>();
+
+        // Act
+        let res = create(&pool, user_body.clone())
+            .await
+            .expect("could not create resource");
+        read(&pool, &res.id).await.expect("could not read resource");
+        delete(&pool, &res.id)
+            .await
+            .expect("could not read resource");
+        let created_result = read(&pool, &res.id)
+            .await
+            .expect_err("expected_failure_did_not_occur");
+
+        assert!(matches!(created_result, ApiError::ResourceNotFound));
+    }
+}
