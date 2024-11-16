@@ -1,54 +1,59 @@
 use axum::{
-    extract::Path,
-    routing::{get, post, put},
+    extract::{Path, State},
+    routing::{delete, get, post, put},
     Json, Router,
 };
-use chrono::Utc;
-use fake::{Fake, Faker};
 use uuid::Uuid;
 
-use crate::models::{LogRecord, LogRecordInput};
+use crate::{
+    controllers::log_record as controller,
+    error::ApiError,
+    models::api::{
+        CreateLogRecordBody, CreateLogRecordResponse, DeleteLogRecordResponse,
+        ListLogRecordsResponse, ReadLogRecordResponse, UpdateLogRecordBody,
+        UpdateLogRecordResponse,
+    },
+    AppState,
+};
 
-async fn read(Path(log_record_id): Path<Uuid>) -> Json<LogRecord> {
-    println!("Getting vehicle with ID: {log_record_id}");
-    let log_record = Faker.fake::<LogRecord>();
-    Json(log_record)
+async fn read(
+    State(appstate): State<AppState>,
+    Path(log_record_id): Path<Uuid>,
+) -> Result<ReadLogRecordResponse, ApiError> {
+    controller::read(&appstate.db, &log_record_id).await
 }
 
-async fn list() -> Json<Vec<LogRecord>> {
-    let log_records = Faker.fake::<Vec<LogRecord>>();
-    Json(log_records)
+async fn list(State(appstate): State<AppState>) -> Result<ListLogRecordsResponse, ApiError> {
+    controller::list(&appstate.db).await
 }
 
-async fn create(Json(log_record_input): Json<LogRecordInput>) -> Json<LogRecord> {
-    let log_record = LogRecord {
-        id: Faker.fake(),
-        date: log_record_input.date.unwrap_or(Utc::now()),
-        log_type: log_record_input.log_type,
-        odometer: log_record_input.odometer,
-    };
-    println!("Created log record: {log_record:?}");
-    Json(log_record)
+async fn create(
+    State(appstate): State<AppState>,
+    Json(log_record_input): Json<CreateLogRecordBody>,
+) -> Result<CreateLogRecordResponse, ApiError> {
+    controller::create(&appstate.db, log_record_input).await
 }
 
 async fn update(
+    State(appstate): State<AppState>,
     Path(log_record_id): Path<Uuid>,
-    Json(log_record_input): Json<LogRecordInput>,
-) -> Json<LogRecord> {
-    let log_record = LogRecord {
-        id: log_record_id,
-        date: log_record_input.date.unwrap_or(Utc::now()),
-        log_type: log_record_input.log_type,
-        odometer: log_record_input.odometer,
-    };
-    println!("Created log record: {log_record:?}");
-    Json(log_record)
+    Json(log_record_input): Json<UpdateLogRecordBody>,
+) -> Result<UpdateLogRecordResponse, ApiError> {
+    controller::update(&appstate.db, &log_record_id, log_record_input).await
 }
 
-pub fn build_router() -> Router {
+async fn delete_route(
+    State(appstate): State<AppState>,
+    Path(log_record_id): Path<Uuid>,
+) -> Result<DeleteLogRecordResponse, ApiError> {
+    controller::delete(&appstate.db, &log_record_id).await
+}
+
+pub fn build_router() -> Router<AppState> {
     Router::new()
         .route("/", get(list))
         .route("/", post(create))
         .route("/:log_record_id", get(read))
         .route("/:log_record_id", put(update))
+        .route("/:log_record_id", delete(delete_route))
 }
