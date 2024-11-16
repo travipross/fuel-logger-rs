@@ -81,11 +81,10 @@ pub async fn update(
 }
 
 pub async fn delete(pool: &PgPool, vehicle_id: Uuid) -> Result<DeleteVehicleResponse, ApiError> {
-    let sql = "DELETE FROM vehicles where id = $1";
-    let res = query(sql).bind(vehicle_id).execute(pool).await?;
-    if res.rows_affected() < 1 {
-        Err(ApiError::ResourceNotFound)
-    } else {
-        Ok(DeleteVehicleResponse)
-    }
+    let sql = "DELETE FROM vehicles WHERE id = $1 RETURNING *";
+    Ok(query(sql)
+        .bind(vehicle_id)
+        .fetch_one(pool)
+        .await
+        .map(|_| DeleteVehicleResponse)?)
 }

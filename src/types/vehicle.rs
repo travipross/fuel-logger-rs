@@ -1,21 +1,14 @@
 pub mod api {
+    use super::db::Vehicle as DbVehicle;
     use crate::error::ApiError;
     use crate::types::primitives::OdometerUnit;
-    use axum::http::StatusCode;
-    use axum::response::IntoResponse;
-    use axum::Json;
-    use fake::faker::company::en::{Buzzword, CompanyName};
-    use fake::Dummy;
-    use serde::{Deserialize, Serialize};
-    use uuid::Uuid;
+    use axum::{http::StatusCode, response::IntoResponse, Json};
 
-    use super::db::Vehicle;
-
-    #[derive(Debug, Deserialize, Dummy, PartialEq)]
+    #[derive(Debug, serde::Deserialize, fake::Dummy, PartialEq)]
     pub struct CreateVehicleBody {
-        #[dummy(faker = "CompanyName()")]
+        #[dummy(faker = "fake::faker::company::en::CompanyName()")]
         pub make: String,
-        #[dummy(faker = "Buzzword()")]
+        #[dummy(faker = "fake::faker::company::en::Buzzword()")]
         pub model: String,
         #[dummy(faker = "1950..2030")]
         pub year: u16,
@@ -24,12 +17,12 @@ pub mod api {
 
     pub type UpdateVehicleBody = CreateVehicleBody;
 
-    #[derive(Debug, Serialize, Dummy)]
+    #[derive(Debug, serde::Serialize, fake::Dummy)]
     pub struct ReadVehicleResponse {
-        pub id: Uuid,
-        #[dummy(faker = "CompanyName()")]
+        pub id: uuid::Uuid,
+        #[dummy(faker = "fake::faker::company::en::CompanyName()")]
         pub make: String,
-        #[dummy(faker = "Buzzword()")]
+        #[dummy(faker = "fake::faker::company::en::Buzzword()")]
         pub model: String,
         #[dummy(faker = "1950..2030")]
         pub year: u16,
@@ -37,9 +30,9 @@ pub mod api {
         pub odometer_unit: OdometerUnit,
     }
 
-    impl TryFrom<Vehicle> for ReadVehicleResponse {
+    impl TryFrom<DbVehicle> for ReadVehicleResponse {
         type Error = ApiError;
-        fn try_from(value: Vehicle) -> Result<Self, Self::Error> {
+        fn try_from(value: DbVehicle) -> Result<Self, Self::Error> {
             Ok(Self {
                 id: value.id,
                 make: value.make,
@@ -56,12 +49,12 @@ pub mod api {
         }
     }
 
-    #[derive(Debug, Serialize, Dummy)]
+    #[derive(Debug, serde::Serialize, fake::Dummy)]
     pub struct ListVehiclesResponse(Vec<ReadVehicleResponse>);
 
     impl FromIterator<ReadVehicleResponse> for ListVehiclesResponse {
         fn from_iter<T: IntoIterator<Item = ReadVehicleResponse>>(iter: T) -> Self {
-            ListVehiclesResponse(iter.into_iter().collect())
+            Self(iter.into_iter().collect())
         }
     }
 
@@ -71,9 +64,9 @@ pub mod api {
         }
     }
 
-    #[derive(Debug, Serialize, Dummy)]
+    #[derive(Debug, serde::Serialize, fake::Dummy)]
     pub struct CreateVehicleResponse {
-        pub id: Uuid,
+        pub id: uuid::Uuid,
     }
 
     impl IntoResponse for CreateVehicleResponse {
@@ -87,7 +80,7 @@ pub mod api {
         }
     }
 
-    #[derive(Debug, Serialize, Dummy)]
+    #[derive(Debug, serde::Serialize, fake::Dummy)]
     pub struct DeleteVehicleResponse;
 
     impl IntoResponse for DeleteVehicleResponse {
@@ -185,20 +178,13 @@ pub mod api {
 pub mod db {
     use super::api::CreateVehicleBody as ApiCreateVehicleBody;
     use crate::types::primitives::OdometerUnit;
-    use fake::{
-        faker::company::en::{Buzzword, CompanyName},
-        Dummy,
-    };
-    use serde::Deserialize;
-    use sqlx::{postgres::PgRow, Row};
-    use uuid::Uuid;
 
-    #[derive(Debug, Deserialize, Dummy, PartialEq)]
+    #[derive(Debug, PartialEq, serde::Deserialize, fake::Dummy, sqlx::FromRow)]
     pub struct Vehicle {
-        pub id: Uuid,
-        #[dummy(faker = "CompanyName()")]
+        pub id: uuid::Uuid,
+        #[dummy(faker = "fake::faker::company::en::CompanyName()")]
         pub make: String,
-        #[dummy(faker = "Buzzword()")]
+        #[dummy(faker = "fake::faker::company::en::Buzzword()")]
         pub model: String,
         #[dummy(faker = "1950..2030")]
         pub year: i32,
@@ -208,7 +194,7 @@ pub mod db {
     }
 
     impl Vehicle {
-        pub fn from_api_type(vehicle_id: &Uuid, body: ApiCreateVehicleBody) -> Self {
+        pub fn from_api_type(vehicle_id: &uuid::Uuid, body: ApiCreateVehicleBody) -> Self {
             Self {
                 id: *vehicle_id,
                 make: body.make,
@@ -216,18 +202,6 @@ pub mod db {
                 year: body.year.into(),
                 odometer_unit: body.odometer_unit.unwrap_or_default(),
             }
-        }
-    }
-
-    impl<'r> sqlx::FromRow<'r, PgRow> for Vehicle {
-        fn from_row(row: &'r PgRow) -> Result<Self, sqlx::Error> {
-            Ok(Self {
-                id: row.try_get("id")?,
-                make: row.try_get("make")?,
-                model: row.try_get("model")?,
-                year: row.try_get("year")?,
-                odometer_unit: row.try_get("odometer_unit")?,
-            })
         }
     }
 }

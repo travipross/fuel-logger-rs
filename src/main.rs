@@ -7,7 +7,7 @@ use std::{env, time::Duration};
 
 use anyhow::Context;
 use axum::{routing::get, Router};
-use routes::{log_records, vehicles};
+use routes::{log_records, users, vehicles};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
 #[derive(Clone)]
@@ -33,6 +33,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/", get(|| async { "Hello, World!" }))
         .nest("/vehicles", vehicles::build_router())
         .nest("/logs", log_records::build_router())
+        .nest("/users", users::build_router())
         .with_state(state);
 
     let port = env::var("PORT").unwrap_or("3000".to_owned());
