@@ -116,6 +116,7 @@ db-migrate-new name:
 db-prepare:
     cargo sqlx prepare
 
+
 # Initializes env and settings.json
 [group('setup')]
 init-env:
