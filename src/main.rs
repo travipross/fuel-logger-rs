@@ -1,5 +1,6 @@
 mod controllers;
 mod error;
+mod models;
 mod routes;
 mod types;
 

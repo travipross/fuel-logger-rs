@@ -2,7 +2,7 @@ use sqlx::{query, query_as, PgPool, Row};
 
 use crate::{
     error::ApiError,
-    types::vehicle::{
+    models::{
         api::{
             CreateVehicleResponse, DeleteVehicleResponse, ListVehiclesResponse,
             ReadVehicleResponse, UpdateVehicleResponse,

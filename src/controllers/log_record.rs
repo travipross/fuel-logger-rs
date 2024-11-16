@@ -3,14 +3,14 @@ use uuid::Uuid;
 
 use crate::{
     error::ApiError,
-    types::log_record::{
+    models::{
         api::{
             CreateLogRecordResponse, DeleteLogRecordResponse, ListLogRecordsResponse,
             ReadLogRecordResponse, UpdateLogRecordResponse,
         },
         db::LogRecord as DbLogRecord,
-        LogType,
     },
+    types::LogType,
 };
 
 pub async fn read(pool: &PgPool, id: &Uuid) -> Result<ReadLogRecordResponse, ApiError> {

@@ -8,7 +8,7 @@ use uuid::Uuid;
 use crate::{
     controllers::user as controller,
     error::ApiError,
-    types::user::{
+    models::{
         api::{
             CreateUserBody, CreateUserResponse, DeleteUserResponse, ListUsersResponse,
             ReadUserResponse, UpdateUserBody, UpdateUserResponse,

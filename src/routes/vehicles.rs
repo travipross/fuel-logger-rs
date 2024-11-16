@@ -11,7 +11,7 @@ use crate::{
         read as read_vehicle, update as update_vehicle,
     },
     error::ApiError,
-    types::vehicle::{
+    models::{
         api::{
             CreateVehicleBody, CreateVehicleResponse, DeleteVehicleResponse, ListVehiclesResponse,
             ReadVehicleResponse, UpdateVehicleBody, UpdateVehicleResponse,

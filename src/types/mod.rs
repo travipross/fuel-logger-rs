@@ -1,4 +1,5 @@
-pub mod log_record;
+pub mod log_type;
 pub mod primitives;
-pub mod user;
-pub mod vehicle;
+
+pub use log_type::LogType;
+pub use primitives::{BrakeComponent, BrakeLocation};

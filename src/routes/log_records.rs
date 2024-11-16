@@ -8,7 +8,7 @@ use uuid::Uuid;
 use crate::{
     controllers::log_record as controller,
     error::ApiError,
-    types::log_record::{
+    models::{
         api::{
             CreateLogRecordBody, CreateLogRecordResponse, DeleteLogRecordResponse,
             ListLogRecordsResponse, ReadLogRecordResponse, UpdateLogRecordBody,

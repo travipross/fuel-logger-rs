@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::{
     error::ApiError,
-    types::user::{
+    models::{
         api::{
             CreateUserResponse, DeleteUserResponse, ListUsersResponse, ReadUserResponse,
             UpdateUserResponse,
