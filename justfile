@@ -12,30 +12,36 @@ default:
 bootstrap: && init-env
     # Install dev dependencies of project
     cargo install cargo-watch sqlx-cli
+alias w := watch
 
 # Perform linting with clippy
 [group('dev')]
 clippy *args:
     cargo clippy {{args}}
+alias lint := clippy
 
 # Check code
 [group('dev')]
 check *args:
     cargo check {{args}}
+alias ch := check
 
 # Build executable
 [group('dev')]
 build *args:
     cargo build {{args}}
+alias b := build
 
 # Run tests
 [group('dev')]
 test *args:
     cargo test {{args}}
+alias t := test
 
 # Build and run program
 run *args:
     cargo run {{args}}
+alias r := run
 
 # Run command while watching for changes
 [group('dev')]
@@ -46,11 +52,14 @@ watch *args='-- just run':
 [group('dev')]
 fmt *args:
     cargo fmt {{args}}
+alias f := fmt
+alias format := fmt
 
 # Clean build artifacts
 [group('dev')]
 clean:
     cargo clean
+alias cl := clean
 
 # Enable git hooks
 [group('setup')]
@@ -102,16 +111,10 @@ db-connect:
 db-migrate-new name:
     sqlx migrate add -r {{name}}
 
-# Aliases
-alias b := build
-alias t := test
-alias r := run
-alias ch := check
-alias lint := check
-alias cl := clean
-alias f := fmt
-alias format := fmt
-alias w := watch
+# Prepare sqlx queries
+[group('database')]
+db-prepare:
+    cargo sqlx prepare
 
 # Initializes env and settings.json
 [group('setup')]
