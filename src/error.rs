@@ -15,7 +15,11 @@ pub enum ApiError {
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         match self {
-            _ => (StatusCode::INTERNAL_SERVER_ERROR, "something went wrong"),
+            Self::Database(_) => (StatusCode::INTERNAL_SERVER_ERROR, "database error"),
+            Self::Conversion(_) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "problem converting types",
+            ),
         }
         .into_response()
     }

@@ -14,7 +14,7 @@ pub async fn read(pool: &PgPool, id: Uuid) -> Result<ReadVehicleResponse, ApiErr
 
     let vehicle = query_as::<_, Vehicle>(sql).bind(id).fetch_one(pool).await?;
 
-    Ok(vehicle.try_into()?)
+    vehicle.try_into()
 }
 
 pub async fn list(pool: &PgPool) -> Result<Vec<ReadVehicleResponse>, ApiError> {
@@ -25,12 +25,11 @@ pub async fn list(pool: &PgPool) -> Result<Vec<ReadVehicleResponse>, ApiError> {
 }
 
 pub async fn create(pool: &PgPool, vehicle: Vehicle) -> Result<CreateVehicleResponse, ApiError> {
-    let sql = "INSERT INTO vehicles (make, model, year, owner_id, odometer_unit) VALUES ($1, $2, $3, $4, $5) RETURNING id";
+    let sql = "INSERT INTO vehicles (make, model, year, odometer_unit) VALUES ($1, $2, $3, $4) RETURNING id";
     let res = query(sql)
         .bind(vehicle.make)
         .bind(vehicle.model)
         .bind(vehicle.year)
-        .bind(vehicle.owner_id)
         .bind(vehicle.odometer_unit)
         .fetch_one(pool)
         .await?;
@@ -51,21 +50,19 @@ pub async fn update(
             make = $1, 
             model = $2, 
             year = $3, 
-            owner_id = $4, 
-            odometer_unit = $5 
-        WHERE id = $6 
+            odometer_unit = $4
+        WHERE id = $5 
         RETURNING *";
     let updated_vehicle = query_as::<_, Vehicle>(sql)
         .bind(vehicle.make)
         .bind(vehicle.model)
         .bind(vehicle.year)
-        .bind(vehicle.owner_id)
         .bind(vehicle.odometer_unit)
         .bind(vehicle_id)
         .fetch_one(pool)
         .await?;
 
-    Ok(updated_vehicle.try_into()?)
+    updated_vehicle.try_into()
 }
 
 pub async fn delete(pool: &PgPool, vehicle_id: Uuid) -> Result<(), ApiError> {

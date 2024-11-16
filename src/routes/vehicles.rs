@@ -18,7 +18,7 @@ use crate::{
         },
         db::Vehicle as DbVehicle,
     },
-    AppState, DEFAULT_USER_ID,
+    AppState,
 };
 
 async fn list(State(appstate): State<AppState>) -> Json<Vec<ReadVehicleResponse>> {
@@ -41,8 +41,7 @@ async fn create(
     State(appstate): State<AppState>,
     Json(body): Json<CreateVehicleBody>,
 ) -> Json<CreateVehicleResponse> {
-    let default_user_id = Uuid::parse_str(DEFAULT_USER_ID).unwrap();
-    let db_vehicle = DbVehicle::from_api_type(&Uuid::new_v4(), &default_user_id, body);
+    let db_vehicle = DbVehicle::from_api_type(&Uuid::new_v4(), body);
     let response = create_vehicle(&appstate.db, db_vehicle).await.unwrap();
     Json(response)
 }
@@ -52,8 +51,7 @@ async fn update(
     Path(vehicle_id): Path<Uuid>,
     Json(body): Json<UpdateVehicleBody>,
 ) -> Json<UpdateVehicleResponse> {
-    let default_user_id = Uuid::parse_str(DEFAULT_USER_ID).unwrap();
-    let db_vehicle = DbVehicle::from_api_type(&vehicle_id, &default_user_id, body);
+    let db_vehicle = DbVehicle::from_api_type(&vehicle_id, body);
     let response = update_vehicle(&appstate.db, vehicle_id, db_vehicle)
         .await
         .unwrap();

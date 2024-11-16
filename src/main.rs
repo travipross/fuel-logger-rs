@@ -7,18 +7,13 @@ use std::{env, time::Duration};
 
 use anyhow::Context;
 use axum::{routing::get, Router};
-use fake::{Fake, Faker};
 use routes::{log_records, vehicles};
-use sqlx::{postgres::PgPoolOptions, query, Pool, Postgres};
-use types::user::User;
-use uuid::Uuid;
+use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
 #[derive(Clone)]
 pub struct AppState {
     db: Pool<Postgres>,
 }
-
-pub const DEFAULT_USER_ID: &str = "50c5ab2e-4c29-4583-a698-5902b861b628";
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -30,32 +25,6 @@ async fn main() -> anyhow::Result<()> {
         .connect(&database_url)
         .await
         .context("can't connect to database")?;
-
-    let mut fake_user = Faker.fake::<User>();
-    fake_user.id = Uuid::parse_str(DEFAULT_USER_ID).context("failed to parse default user UUID")?;
-    query!(
-        "INSERT INTO users (
-            id, 
-            first_name, 
-            last_name, 
-            username, 
-            email
-        ) VALUES (
-            $1, 
-            $2, 
-            $3, 
-            $4, 
-            $5
-        ) ON CONFLICT DO NOTHING",
-        fake_user.id,
-        fake_user.first_name,
-        fake_user.last_name,
-        fake_user.username,
-        fake_user.email
-    )
-    .execute(&pool)
-    .await
-    .unwrap();
 
     let state = AppState { db: pool };
 

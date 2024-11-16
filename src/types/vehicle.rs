@@ -30,8 +30,7 @@ pub mod api {
         pub model: String,
         #[dummy(faker = "1950..2030")]
         pub year: u16,
-        #[serde(skip)]
-        pub owner_id: Uuid,
+        // TODO: Add owner_id
         pub odometer_unit: OdometerUnit,
     }
 
@@ -53,7 +52,6 @@ pub mod api {
                 make: value.make,
                 model: value.model,
                 year: u16::try_from(value.year).map_err(|e| ApiError::Conversion(e.to_string()))?,
-                owner_id: value.owner_id,
                 odometer_unit: value.odometer_unit,
             })
         }
@@ -152,7 +150,6 @@ pub mod db {
     };
     use serde::Deserialize;
     use sqlx::{postgres::PgRow, Row};
-    use std::str::FromStr;
     use uuid::Uuid;
 
     #[derive(Debug, Deserialize, Dummy, PartialEq)]
@@ -165,22 +162,17 @@ pub mod db {
         #[dummy(faker = "1950..2030")]
         pub year: i32,
         #[serde(skip)]
-        pub owner_id: Uuid,
+        // TODO: Add owner_id
         pub odometer_unit: OdometerUnit,
     }
 
     impl Vehicle {
-        pub fn from_api_type(
-            vehicle_id: &Uuid,
-            owner_id: &Uuid,
-            body: ApiCreateVehicleBody,
-        ) -> Self {
+        pub fn from_api_type(vehicle_id: &Uuid, body: ApiCreateVehicleBody) -> Self {
             Self {
                 id: *vehicle_id,
                 make: body.make,
                 model: body.model,
                 year: body.year.into(),
-                owner_id: *owner_id,
                 odometer_unit: body.odometer_unit.unwrap_or_default(),
             }
         }
@@ -188,26 +180,12 @@ pub mod db {
 
     impl<'r> sqlx::FromRow<'r, PgRow> for Vehicle {
         fn from_row(row: &'r PgRow) -> Result<Self, sqlx::Error> {
-            let odometer_unit =
-                OdometerUnit::from_str(row.try_get("odometer_unit")?).map_err(|e| {
-                    sqlx::Error::ColumnDecode {
-                        index: "odometer_unit".to_owned(),
-                        source: e.into(),
-                    }
-                })?;
-
             Ok(Self {
                 id: row.try_get("id")?,
                 make: row.try_get("make")?,
                 model: row.try_get("model")?,
-                owner_id: row.try_get("owner_id")?,
-                year: row.try_get::<i32, _>("year")?.try_into().map_err(|e| {
-                    sqlx::Error::ColumnDecode {
-                        index: "year".to_owned(),
-                        source: Box::new(e),
-                    }
-                })?,
-                odometer_unit,
+                year: row.try_get("year")?,
+                odometer_unit: row.try_get("odometer_unit")?,
             })
         }
     }

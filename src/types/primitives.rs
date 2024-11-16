@@ -4,6 +4,8 @@ use anyhow::anyhow;
 use fake::Dummy;
 use serde::{Deserialize, Serialize};
 
+use crate::error::ApiError;
+
 #[derive(Debug, Serialize, Deserialize, Dummy, Clone, PartialEq)]
 #[serde(tag = "rotation_type")]
 #[serde(rename_all = "snake_case")]
@@ -105,6 +107,20 @@ impl From<OdometerUnit> for &str {
         match value {
             OdometerUnit::Metric => "km",
             OdometerUnit::Imperial => "mi",
+        }
+    }
+}
+
+impl TryFrom<String> for OdometerUnit {
+    type Error = ApiError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match value.as_str() {
+            "km" => Ok(Self::Metric),
+            "mi" => Ok(Self::Imperial),
+            _ => Err(ApiError::Conversion(format!(
+                "unrecognized odometer unit: {value}. Must be \"km\" or \"mi\""
+            ))),
         }
     }
 }
