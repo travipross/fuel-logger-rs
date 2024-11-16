@@ -4,7 +4,10 @@ use uuid::Uuid;
 use crate::{
     error::ApiError,
     types::vehicle::{
-        api::{CreateVehicleResponse, ReadVehicleResponse, UpdateVehicleResponse},
+        api::{
+            CreateVehicleResponse, DeleteVehicleResponse, ListVehiclesResponse,
+            ReadVehicleResponse, UpdateVehicleResponse,
+        },
         db::Vehicle,
     },
 };
@@ -17,7 +20,7 @@ pub async fn read(pool: &PgPool, id: Uuid) -> Result<ReadVehicleResponse, ApiErr
     vehicle.try_into()
 }
 
-pub async fn list(pool: &PgPool) -> Result<Vec<ReadVehicleResponse>, ApiError> {
+pub async fn list(pool: &PgPool) -> Result<ListVehiclesResponse, ApiError> {
     let sql = "SELECT * FROM vehicles";
     let vehicles = sqlx::query_as::<_, Vehicle>(sql).fetch_all(pool).await?;
 
@@ -25,7 +28,19 @@ pub async fn list(pool: &PgPool) -> Result<Vec<ReadVehicleResponse>, ApiError> {
 }
 
 pub async fn create(pool: &PgPool, vehicle: Vehicle) -> Result<CreateVehicleResponse, ApiError> {
-    let sql = "INSERT INTO vehicles (make, model, year, odometer_unit) VALUES ($1, $2, $3, $4) RETURNING id";
+    let sql = "
+        INSERT INTO vehicles (
+            make, 
+            model, 
+            year, 
+            odometer_unit
+        ) VALUES (
+            $1, 
+            $2, 
+            $3, 
+            $4
+        ) RETURNING id";
+
     let res = query(sql)
         .bind(vehicle.make)
         .bind(vehicle.model)
@@ -65,8 +80,12 @@ pub async fn update(
     updated_vehicle.try_into()
 }
 
-pub async fn delete(pool: &PgPool, vehicle_id: Uuid) -> Result<(), ApiError> {
+pub async fn delete(pool: &PgPool, vehicle_id: Uuid) -> Result<DeleteVehicleResponse, ApiError> {
     let sql = "DELETE FROM vehicles where id = $1";
-    query(sql).bind(vehicle_id).execute(pool).await?;
-    Ok(())
+    let res = query(sql).bind(vehicle_id).execute(pool).await?;
+    if res.rows_affected() < 1 {
+        Err(ApiError::ResourceNotFound)
+    } else {
+        Ok(DeleteVehicleResponse)
+    }
 }

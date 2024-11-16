@@ -1,6 +1,9 @@
 pub mod api {
     use crate::error::ApiError;
     use crate::types::primitives::OdometerUnit;
+    use axum::http::StatusCode;
+    use axum::response::IntoResponse;
+    use axum::Json;
     use fake::faker::company::en::{Buzzword, CompanyName};
     use fake::Dummy;
     use serde::{Deserialize, Serialize};
@@ -34,16 +37,6 @@ pub mod api {
         pub odometer_unit: OdometerUnit,
     }
 
-    #[derive(Debug, Serialize, Dummy)]
-    pub struct CreateVehicleResponse {
-        pub id: Uuid,
-    }
-
-    #[derive(Debug, Serialize, Dummy)]
-    pub struct DeleteVehicleResponse;
-
-    pub type UpdateVehicleResponse = ReadVehicleResponse;
-
     impl TryFrom<Vehicle> for ReadVehicleResponse {
         type Error = ApiError;
         fn try_from(value: Vehicle) -> Result<Self, Self::Error> {
@@ -56,6 +49,54 @@ pub mod api {
             })
         }
     }
+
+    impl IntoResponse for ReadVehicleResponse {
+        fn into_response(self) -> axum::response::Response {
+            (StatusCode::OK, Json(self)).into_response()
+        }
+    }
+
+    #[derive(Debug, Serialize, Dummy)]
+    pub struct ListVehiclesResponse(Vec<ReadVehicleResponse>);
+
+    impl FromIterator<ReadVehicleResponse> for ListVehiclesResponse {
+        fn from_iter<T: IntoIterator<Item = ReadVehicleResponse>>(iter: T) -> Self {
+            ListVehiclesResponse(iter.into_iter().collect())
+        }
+    }
+
+    impl IntoResponse for ListVehiclesResponse {
+        fn into_response(self) -> axum::response::Response {
+            (StatusCode::OK, Json(self)).into_response()
+        }
+    }
+
+    #[derive(Debug, Serialize, Dummy)]
+    pub struct CreateVehicleResponse {
+        pub id: Uuid,
+    }
+
+    impl IntoResponse for CreateVehicleResponse {
+        fn into_response(self) -> axum::response::Response {
+            (
+                StatusCode::CREATED,
+                [("location", format!("/vehicles/{}", self.id))],
+                Json(self),
+            )
+                .into_response()
+        }
+    }
+
+    #[derive(Debug, Serialize, Dummy)]
+    pub struct DeleteVehicleResponse;
+
+    impl IntoResponse for DeleteVehicleResponse {
+        fn into_response(self) -> axum::response::Response {
+            (StatusCode::NO_CONTENT).into_response()
+        }
+    }
+
+    pub type UpdateVehicleResponse = ReadVehicleResponse;
 
     #[cfg(test)]
     mod api_type_tests {

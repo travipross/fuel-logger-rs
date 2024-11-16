@@ -3,7 +3,6 @@ use axum::{
     routing::{delete, get, post, put},
     Json, Router,
 };
-use serde_json::json;
 use uuid::Uuid;
 
 use crate::{
@@ -11,59 +10,50 @@ use crate::{
         create as create_vehicle, delete as delete_vehicle, list as list_vehicles,
         read as read_vehicle, update as update_vehicle,
     },
+    error::ApiError,
     types::vehicle::{
         api::{
-            CreateVehicleBody, CreateVehicleResponse, ReadVehicleResponse, UpdateVehicleBody,
-            UpdateVehicleResponse,
+            CreateVehicleBody, CreateVehicleResponse, DeleteVehicleResponse, ListVehiclesResponse,
+            ReadVehicleResponse, UpdateVehicleBody, UpdateVehicleResponse,
         },
         db::Vehicle as DbVehicle,
     },
     AppState,
 };
 
-async fn list(State(appstate): State<AppState>) -> Json<Vec<ReadVehicleResponse>> {
-    let vehicles = list_vehicles(&appstate.db)
-        .await
-        .expect("could not list vehicles");
-    Json(vehicles)
+async fn list(State(appstate): State<AppState>) -> Result<ListVehiclesResponse, ApiError> {
+    list_vehicles(&appstate.db).await
 }
 
 async fn read(
     State(appstate): State<AppState>,
     Path(vehicle_id): Path<Uuid>,
-) -> Json<ReadVehicleResponse> {
-    println!("Getting vehicle with ID: {}", vehicle_id);
-    let vehicle = read_vehicle(&appstate.db, vehicle_id).await.unwrap();
-    Json(vehicle)
+) -> Result<ReadVehicleResponse, ApiError> {
+    read_vehicle(&appstate.db, vehicle_id).await
 }
 
 async fn create(
     State(appstate): State<AppState>,
     Json(body): Json<CreateVehicleBody>,
-) -> Json<CreateVehicleResponse> {
+) -> Result<CreateVehicleResponse, ApiError> {
     let db_vehicle = DbVehicle::from_api_type(&Uuid::new_v4(), body);
-    let response = create_vehicle(&appstate.db, db_vehicle).await.unwrap();
-    Json(response)
+    create_vehicle(&appstate.db, db_vehicle).await
 }
 
 async fn update(
     State(appstate): State<AppState>,
     Path(vehicle_id): Path<Uuid>,
     Json(body): Json<UpdateVehicleBody>,
-) -> Json<UpdateVehicleResponse> {
+) -> Result<UpdateVehicleResponse, ApiError> {
     let db_vehicle = DbVehicle::from_api_type(&vehicle_id, body);
-    let response = update_vehicle(&appstate.db, vehicle_id, db_vehicle)
-        .await
-        .unwrap();
-    Json(response)
+    update_vehicle(&appstate.db, vehicle_id, db_vehicle).await
 }
 
 async fn delete_route(
     Path(vehicle_id): Path<Uuid>,
     State(appstate): State<AppState>,
-) -> Json<serde_json::Value> {
-    delete_vehicle(&appstate.db, vehicle_id).await.unwrap();
-    Json(json!({}))
+) -> Result<DeleteVehicleResponse, ApiError> {
+    delete_vehicle(&appstate.db, vehicle_id).await
 }
 
 pub fn build_router() -> Router<AppState> {
