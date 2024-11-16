@@ -5,14 +5,14 @@ use crate::{
     error::ApiError,
     models::{
         api::{
-            CreateUserResponse, DeleteUserResponse, ListUsersResponse, ReadUserResponse,
-            UpdateUserResponse,
+            CreateUserBody, CreateUserResponse, DeleteUserResponse, ListUsersResponse,
+            ReadUserResponse, UpdateUserBody, UpdateUserResponse,
         },
         db::User as DbUser,
     },
 };
 
-pub async fn read(pool: &PgPool, id: Uuid) -> Result<ReadUserResponse, ApiError> {
+pub async fn read(pool: &PgPool, id: &Uuid) -> Result<ReadUserResponse, ApiError> {
     let sql = "SELECT * FROM users WHERE id = $1";
 
     let user = query_as::<_, DbUser>(sql).bind(id).fetch_one(pool).await?;
@@ -27,7 +27,8 @@ pub async fn list(pool: &PgPool) -> Result<ListUsersResponse, ApiError> {
     Ok(users.into_iter().map(Into::into).collect())
 }
 
-pub async fn create(pool: &PgPool, user: DbUser) -> Result<CreateUserResponse, ApiError> {
+pub async fn create(pool: &PgPool, body: CreateUserBody) -> Result<CreateUserResponse, ApiError> {
+    let user = DbUser::from_api_type(&Uuid::new_v4(), body);
     let sql = "
         INSERT INTO users (
             first_name, 
@@ -56,9 +57,10 @@ pub async fn create(pool: &PgPool, user: DbUser) -> Result<CreateUserResponse, A
 
 pub async fn update(
     pool: &PgPool,
-    user_id: Uuid,
-    user: DbUser,
+    user_id: &Uuid,
+    body: UpdateUserBody,
 ) -> Result<UpdateUserResponse, ApiError> {
+    let user = DbUser::from_api_type(user_id, body);
     let sql = "
         UPDATE users 
         SET 
@@ -80,7 +82,7 @@ pub async fn update(
     Ok(updated_user.into())
 }
 
-pub async fn delete(pool: &PgPool, user_id: Uuid) -> Result<DeleteUserResponse, ApiError> {
+pub async fn delete(pool: &PgPool, user_id: &Uuid) -> Result<DeleteUserResponse, ApiError> {
     let sql = "DELETE FROM users where id = $1";
     let res = query(sql).bind(user_id).execute(pool).await?;
     if res.rows_affected() < 1 {

@@ -1,10 +1,11 @@
 use crate::{models::api::CreateLogRecordBody as ApiCreateLogRecordBody, types::LogType};
 use sqlx::{postgres::PgRow, FromRow, Row};
+use uuid::Uuid;
 
 #[derive(Debug, fake::Dummy, PartialEq, Clone, sqlx::FromRow)]
 pub struct LogRecord {
-    pub id: uuid::Uuid,
-    pub vehicle_id: uuid::Uuid,
+    pub id: Uuid,
+    pub vehicle_id: Uuid,
     pub date: chrono::DateTime<chrono::Utc>,
     #[sqlx(flatten)]
     pub log_type: LogType,
@@ -13,7 +14,7 @@ pub struct LogRecord {
 }
 
 impl LogRecord {
-    pub fn from_api_type(log_record_id: &uuid::Uuid, body: ApiCreateLogRecordBody) -> Self {
+    pub fn from_api_type(log_record_id: &Uuid, body: ApiCreateLogRecordBody) -> Self {
         Self {
             id: *log_record_id,
             vehicle_id: body.vehicle_id,
@@ -27,9 +28,9 @@ impl LogRecord {
 
 impl<'r> FromRow<'r, PgRow> for LogRecord {
     fn from_row(row: &'r PgRow) -> Result<Self, sqlx::Error> {
-        let id: uuid::Uuid = row.try_get("id")?;
+        let id: Uuid = row.try_get("id")?;
         let date: chrono::DateTime<chrono::Utc> = row.try_get("log_date")?;
-        let vehicle_id: uuid::Uuid = row.try_get("vehicle_id")?;
+        let vehicle_id: Uuid = row.try_get("vehicle_id")?;
         let odometer: u16 = row.try_get::<i32, _>("odometer")?.try_into().map_err(|e| {
             sqlx::Error::ColumnDecode {
                 index: "odometer".to_owned(),

@@ -1,10 +1,11 @@
 use crate::{error::ApiError, models::db::Vehicle as DbVehicle, types::primitives::OdometerUnit};
 use axum::{http::StatusCode, response::IntoResponse, Json};
+use uuid::Uuid;
 
 // Create
 #[derive(Debug, serde::Deserialize, fake::Dummy, PartialEq)]
 pub struct CreateVehicleBody {
-    pub owner_id: uuid::Uuid,
+    pub owner_id: Uuid,
     #[dummy(faker = "fake::faker::company::en::CompanyName()")]
     pub make: String,
     #[dummy(faker = "fake::faker::company::en::Buzzword()")]
@@ -16,7 +17,7 @@ pub struct CreateVehicleBody {
 
 #[derive(Debug, serde::Serialize, fake::Dummy)]
 pub struct CreateVehicleResponse {
-    pub id: uuid::Uuid,
+    pub id: Uuid,
 }
 
 impl IntoResponse for CreateVehicleResponse {
@@ -33,8 +34,8 @@ impl IntoResponse for CreateVehicleResponse {
 // Read
 #[derive(Debug, serde::Serialize, fake::Dummy)]
 pub struct ReadVehicleResponse {
-    pub id: uuid::Uuid,
-    pub owner_id: uuid::Uuid,
+    pub id: Uuid,
+    pub owner_id: Uuid,
     #[dummy(faker = "fake::faker::company::en::CompanyName()")]
     pub make: String,
     #[dummy(faker = "fake::faker::company::en::Buzzword()")]
@@ -129,7 +130,7 @@ mod api_type_tests {
         let model = Faker.fake::<String>();
         let year = Faker.fake::<u16>();
         let odometer_unit = Faker.fake::<Option<OdometerUnit>>();
-        let owner_id = Faker.fake::<uuid::Uuid>();
+        let owner_id = Faker.fake::<Uuid>();
 
         let json = json!({
             "owner_id": owner_id,
@@ -160,7 +161,7 @@ mod api_type_tests {
         let make = Faker.fake::<String>();
         let model = Faker.fake::<String>();
         let year = Faker.fake::<u16>();
-        let owner_id = Faker.fake::<uuid::Uuid>();
+        let owner_id = Faker.fake::<Uuid>();
 
         let json = json!({
             "owner_id": owner_id,

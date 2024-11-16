@@ -1,4 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse, Json};
+use uuid::Uuid;
 
 use crate::models::db::User as DbUser;
 
@@ -16,7 +17,7 @@ pub struct CreateUserBody {
 
 #[derive(Debug, serde::Serialize, fake::Dummy)]
 pub struct CreateUserResponse {
-    pub id: uuid::Uuid,
+    pub id: Uuid,
 }
 
 impl IntoResponse for CreateUserResponse {
@@ -32,7 +33,7 @@ impl IntoResponse for CreateUserResponse {
 
 #[derive(Debug, serde::Serialize, fake::Dummy)]
 pub struct ReadUserResponse {
-    pub id: uuid::Uuid,
+    pub id: Uuid,
     #[dummy(faker = "fake::faker::name::en::FirstName()")]
     pub first_name: String,
     #[dummy(faker = "fake::faker::name::en::LastName()")]

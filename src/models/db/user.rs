@@ -1,8 +1,10 @@
+use uuid::Uuid;
+
 use crate::models::api::CreateUserBody as ApiCreateUserBody;
 
 #[derive(Debug, serde::Serialize, fake::Dummy, sqlx::FromRow)]
 pub struct User {
-    pub id: uuid::Uuid,
+    pub id: Uuid,
     #[dummy(faker = "fake::faker::name::en::FirstName()")]
     pub first_name: String,
     #[dummy(faker = "fake::faker::name::en::LastName()")]
@@ -14,7 +16,7 @@ pub struct User {
 }
 
 impl User {
-    pub fn from_api_type(user_id: &uuid::Uuid, body: ApiCreateUserBody) -> Self {
+    pub fn from_api_type(user_id: &Uuid, body: ApiCreateUserBody) -> Self {
         Self {
             id: *user_id,
             first_name: body.first_name,

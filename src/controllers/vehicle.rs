@@ -1,17 +1,18 @@
 use sqlx::{query, query_as, PgPool, Row};
+use uuid::Uuid;
 
 use crate::{
     error::ApiError,
     models::{
         api::{
-            CreateVehicleResponse, DeleteVehicleResponse, ListVehiclesResponse,
-            ReadVehicleResponse, UpdateVehicleResponse,
+            CreateVehicleBody, CreateVehicleResponse, DeleteVehicleResponse, ListVehiclesResponse,
+            ReadVehicleResponse, UpdateVehicleBody, UpdateVehicleResponse,
         },
         db::Vehicle as DbVehicle,
     },
 };
 
-pub async fn read(pool: &PgPool, id: &uuid::Uuid) -> Result<ReadVehicleResponse, ApiError> {
+pub async fn read(pool: &PgPool, id: &Uuid) -> Result<ReadVehicleResponse, ApiError> {
     let sql = "SELECT * FROM vehicles WHERE id = $1";
 
     let vehicle = query_as::<_, DbVehicle>(sql)
@@ -29,7 +30,11 @@ pub async fn list(pool: &PgPool) -> Result<ListVehiclesResponse, ApiError> {
     vehicles.into_iter().map(TryInto::try_into).collect()
 }
 
-pub async fn create(pool: &PgPool, vehicle: DbVehicle) -> Result<CreateVehicleResponse, ApiError> {
+pub async fn create(
+    pool: &PgPool,
+    body: CreateVehicleBody,
+) -> Result<CreateVehicleResponse, ApiError> {
+    let vehicle = DbVehicle::from_api_type(&Uuid::new_v4(), body);
     let sql = "
         INSERT INTO vehicles (
             owner_id,
@@ -54,12 +59,17 @@ pub async fn create(pool: &PgPool, vehicle: DbVehicle) -> Result<CreateVehicleRe
         .fetch_one(pool)
         .await?;
 
-    let id = res.try_get::<uuid::Uuid, _>("id")?;
+    let id = res.try_get::<Uuid, _>("id")?;
 
     Ok(CreateVehicleResponse { id })
 }
 
-pub async fn update(pool: &PgPool, vehicle: DbVehicle) -> Result<UpdateVehicleResponse, ApiError> {
+pub async fn update(
+    pool: &PgPool,
+    vehicle_id: &Uuid,
+    body: UpdateVehicleBody,
+) -> Result<UpdateVehicleResponse, ApiError> {
+    let vehicle = DbVehicle::from_api_type(vehicle_id, body);
     let sql = "
         UPDATE vehicles 
         SET 
@@ -81,10 +91,7 @@ pub async fn update(pool: &PgPool, vehicle: DbVehicle) -> Result<UpdateVehicleRe
     updated_vehicle.try_into()
 }
 
-pub async fn delete(
-    pool: &PgPool,
-    vehicle_id: uuid::Uuid,
-) -> Result<DeleteVehicleResponse, ApiError> {
+pub async fn delete(pool: &PgPool, vehicle_id: &Uuid) -> Result<DeleteVehicleResponse, ApiError> {
     let sql = "DELETE FROM vehicles WHERE id = $1 RETURNING *";
     Ok(query(sql)
         .bind(vehicle_id)

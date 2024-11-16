@@ -1,11 +1,13 @@
+use uuid::Uuid;
+
 use crate::{
     models::api::CreateVehicleBody as ApiCreateVehicleBody, types::primitives::OdometerUnit,
 };
 
 #[derive(Debug, PartialEq, serde::Deserialize, fake::Dummy, sqlx::FromRow)]
 pub struct Vehicle {
-    pub id: uuid::Uuid,
-    pub owner_id: uuid::Uuid,
+    pub id: Uuid,
+    pub owner_id: Uuid,
     #[dummy(faker = "fake::faker::company::en::CompanyName()")]
     pub make: String,
     #[dummy(faker = "fake::faker::company::en::Buzzword()")]
@@ -17,7 +19,7 @@ pub struct Vehicle {
 }
 
 impl Vehicle {
-    pub fn from_api_type(vehicle_id: &uuid::Uuid, body: ApiCreateVehicleBody) -> Self {
+    pub fn from_api_type(vehicle_id: &Uuid, body: ApiCreateVehicleBody) -> Self {
         Self {
             id: *vehicle_id,
             owner_id: body.owner_id,

@@ -8,13 +8,10 @@ use uuid::Uuid;
 use crate::{
     controllers::log_record as controller,
     error::ApiError,
-    models::{
-        api::{
-            CreateLogRecordBody, CreateLogRecordResponse, DeleteLogRecordResponse,
-            ListLogRecordsResponse, ReadLogRecordResponse, UpdateLogRecordBody,
-            UpdateLogRecordResponse,
-        },
-        db::LogRecord as DbLogRecord,
+    models::api::{
+        CreateLogRecordBody, CreateLogRecordResponse, DeleteLogRecordResponse,
+        ListLogRecordsResponse, ReadLogRecordResponse, UpdateLogRecordBody,
+        UpdateLogRecordResponse,
     },
     AppState,
 };
@@ -34,8 +31,7 @@ async fn create(
     State(appstate): State<AppState>,
     Json(log_record_input): Json<CreateLogRecordBody>,
 ) -> Result<CreateLogRecordResponse, ApiError> {
-    let db_log_record = DbLogRecord::from_api_type(&uuid::Uuid::new_v4(), log_record_input);
-    controller::create(&appstate.db, db_log_record).await
+    controller::create(&appstate.db, log_record_input).await
 }
 
 async fn update(
@@ -43,8 +39,7 @@ async fn update(
     Path(log_record_id): Path<Uuid>,
     Json(log_record_input): Json<UpdateLogRecordBody>,
 ) -> Result<UpdateLogRecordResponse, ApiError> {
-    let db_log_record = DbLogRecord::from_api_type(&log_record_id, log_record_input);
-    controller::update(&appstate.db, &log_record_id, db_log_record).await
+    controller::update(&appstate.db, &log_record_id, log_record_input).await
 }
 
 async fn delete_route(

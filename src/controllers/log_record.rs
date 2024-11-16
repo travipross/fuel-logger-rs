@@ -5,8 +5,9 @@ use crate::{
     error::ApiError,
     models::{
         api::{
-            CreateLogRecordResponse, DeleteLogRecordResponse, ListLogRecordsResponse,
-            ReadLogRecordResponse, UpdateLogRecordResponse,
+            CreateLogRecordBody, CreateLogRecordResponse, DeleteLogRecordResponse,
+            ListLogRecordsResponse, ReadLogRecordResponse, UpdateLogRecordBody,
+            UpdateLogRecordResponse,
         },
         db::LogRecord as DbLogRecord,
     },
@@ -35,8 +36,10 @@ pub async fn list(pool: &PgPool) -> Result<ListLogRecordsResponse, ApiError> {
 
 pub async fn create(
     pool: &PgPool,
-    log_record: DbLogRecord,
+    body: CreateLogRecordBody,
 ) -> Result<CreateLogRecordResponse, ApiError> {
+    let log_record = DbLogRecord::from_api_type(&Uuid::new_v4(), body);
+
     // Initialize query builder with INSERT statement
     let mut qb = QueryBuilder::<sqlx::Postgres>::new("INSERT INTO log_records(");
     let mut separated = qb.separated(", ");
@@ -131,12 +134,11 @@ pub async fn create(
 pub async fn update(
     pool: &PgPool,
     log_record_id: &Uuid,
-    log_record: DbLogRecord,
+    body: UpdateLogRecordBody,
 ) -> Result<UpdateLogRecordResponse, ApiError> {
     let existing_val = read(pool, log_record_id).await?;
-    if std::mem::discriminant(&log_record.log_type)
-        == std::mem::discriminant(&existing_val.log_type)
-    {
+    if std::mem::discriminant(&body.log_type) == std::mem::discriminant(&existing_val.log_type) {
+        let log_record = DbLogRecord::from_api_type(log_record_id, body);
         let mut qb = QueryBuilder::<sqlx::Postgres>::new("UPDATE log_records SET ");
         let mut separated = qb.separated(", ");
 

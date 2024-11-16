@@ -11,12 +11,9 @@ use crate::{
         read as read_vehicle, update as update_vehicle,
     },
     error::ApiError,
-    models::{
-        api::{
-            CreateVehicleBody, CreateVehicleResponse, DeleteVehicleResponse, ListVehiclesResponse,
-            ReadVehicleResponse, UpdateVehicleBody, UpdateVehicleResponse,
-        },
-        db::Vehicle as DbVehicle,
+    models::api::{
+        CreateVehicleBody, CreateVehicleResponse, DeleteVehicleResponse, ListVehiclesResponse,
+        ReadVehicleResponse, UpdateVehicleBody, UpdateVehicleResponse,
     },
     AppState,
 };
@@ -36,8 +33,7 @@ async fn create(
     State(appstate): State<AppState>,
     Json(body): Json<CreateVehicleBody>,
 ) -> Result<CreateVehicleResponse, ApiError> {
-    let db_vehicle = DbVehicle::from_api_type(&Uuid::new_v4(), body);
-    create_vehicle(&appstate.db, db_vehicle).await
+    create_vehicle(&appstate.db, body).await
 }
 
 async fn update(
@@ -45,15 +41,14 @@ async fn update(
     Path(vehicle_id): Path<Uuid>,
     Json(body): Json<UpdateVehicleBody>,
 ) -> Result<UpdateVehicleResponse, ApiError> {
-    let db_vehicle = DbVehicle::from_api_type(&vehicle_id, body);
-    update_vehicle(&appstate.db, db_vehicle).await
+    update_vehicle(&appstate.db, &vehicle_id, body).await
 }
 
 async fn delete_route(
     Path(vehicle_id): Path<Uuid>,
     State(appstate): State<AppState>,
 ) -> Result<DeleteVehicleResponse, ApiError> {
-    delete_vehicle(&appstate.db, vehicle_id).await
+    delete_vehicle(&appstate.db, &vehicle_id).await
 }
 
 pub fn build_router() -> Router<AppState> {
