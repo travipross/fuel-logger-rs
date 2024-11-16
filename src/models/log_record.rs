@@ -5,7 +5,7 @@ use fake::Dummy;
 use serde::Serialize;
 
 #[derive(Debug, Serialize, Dummy, Ord, PartialOrd, Eq, PartialEq, Copy, Clone)]
-pub struct OdometerKms(pub u32);
+pub struct OdometerKms(#[dummy(faker = "0..500000")] pub u32);
 
 impl Display for OdometerKms {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -13,10 +13,13 @@ impl Display for OdometerKms {
     }
 }
 
+#[derive(Debug, Serialize, Dummy)]
+pub struct FuelAmountLitres(#[dummy(faker = "5.0..120.0")] pub f32);
+
 #[allow(dead_code)]
 #[derive(Debug, Serialize, Dummy)]
 pub enum LogType {
-    FuelUp { amount: f32 },
+    FuelUp { amount: FuelAmountLitres },
     // TireRotation,
     // TireChange,
     // OilChange,

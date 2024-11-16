@@ -2,7 +2,7 @@ mod models;
 mod routes;
 
 use fake::{Fake, Faker};
-use models::{LogRecord, Person, Vehicle};
+use models::{LogRecord, Person, Vehicle, VehicleMake, VehicleModel, VehicleYear};
 
 use axum::{routing::get, Router};
 use routes::get_vehicles;
@@ -11,9 +11,9 @@ async fn main() {
     let person = Faker.fake::<Person>();
 
     let mut civic = Vehicle::new(
-        "Honda".to_owned(),
-        "Civic".to_owned(),
-        2020,
+        VehicleMake("Honda".to_owned()),
+        VehicleModel("Civic".to_owned()),
+        VehicleYear(2020),
         person,
         models::OdometerUnit::Metric,
     );
