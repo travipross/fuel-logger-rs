@@ -5,7 +5,7 @@ use fake::{Fake, Faker};
 use models::{LogRecord, Person, Vehicle, VehicleMake, VehicleModel, VehicleYear};
 
 use axum::{routing::get, Router};
-use routes::get_vehicles;
+use routes::{get_logs, get_vehicle, get_vehicles};
 #[tokio::main]
 async fn main() {
     let person = Faker.fake::<Person>();
@@ -32,6 +32,8 @@ async fn main() {
     // build our application with a single route
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
+        .route("/logs/:vehicle_id", get(get_logs))
+        .route("/vehicle/:vehicle_id", get(get_vehicle))
         .route("/vehicles", get(get_vehicles));
 
     // run our app with hyper, listening globally on port 3000
