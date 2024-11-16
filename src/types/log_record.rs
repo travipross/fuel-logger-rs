@@ -3,47 +3,9 @@ use fake::Dummy;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Serialize, Deserialize, Dummy, Clone, PartialEq)]
-#[serde(tag = "rotation_type")]
-#[serde(rename_all = "snake_case")]
-pub enum TireRotationType {
-    FrontRear,
-    Side,
-    Diagonal,
-}
-
-#[derive(Debug, Serialize, Deserialize, Dummy, Clone, PartialEq)]
-#[serde(rename_all = "snake_case")]
-pub enum TireType {
-    Summer,
-    Winter,
-    AllSeason,
-}
-
-#[derive(Debug, Serialize, Deserialize, Dummy, Clone, PartialEq)]
-#[serde(rename_all = "snake_case")]
-pub enum BrakeLocation {
-    Front,
-    Rear,
-    All,
-}
-
-#[derive(Debug, Serialize, Deserialize, Dummy, Clone, PartialEq)]
-#[serde(rename_all = "snake_case")]
-pub enum BrakeComponent {
-    Rotors,
-    Calipers,
-    Both,
-}
-
-#[derive(Debug, Serialize, Deserialize, Dummy, Clone, PartialEq)]
-#[serde(rename_all = "snake_case")]
-pub enum FluidType {
-    Wiper,
-    Transmission,
-    Brake,
-    Coolant,
-}
+use crate::types::primitives::{
+    BrakeComponent, BrakeLocation, FluidType, TireRotationType, TireType,
+};
 
 #[allow(dead_code)]
 #[derive(Debug, Serialize, PartialEq, Deserialize, Dummy, Clone)]
@@ -95,10 +57,10 @@ pub struct LogRecordInput {
 
 #[cfg(test)]
 mod log_record_tests {
+    use super::LogType;
+    use crate::types::log_record::LogRecordInput;
     use fake::{Fake, Faker};
     use serde_json::json;
-
-    use crate::models::{LogRecordInput, LogType};
 
     use super::{DateTime, LogRecord, Utc};
 

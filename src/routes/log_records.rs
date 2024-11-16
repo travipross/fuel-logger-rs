@@ -8,7 +8,7 @@ use fake::{Fake, Faker};
 use uuid::Uuid;
 
 use crate::{
-    models::{LogRecord, LogRecordInput},
+    types::log_record::{LogRecord, LogRecordInput},
     AppState,
 };
 

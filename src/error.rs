@@ -7,6 +7,9 @@ use axum::{
 pub enum ApiError {
     #[error("{0}")]
     Database(#[from] sqlx::Error),
+
+    #[error("{0}")]
+    Conversion(String),
 }
 
 impl IntoResponse for ApiError {

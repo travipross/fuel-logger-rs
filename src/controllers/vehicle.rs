@@ -3,34 +3,35 @@ use uuid::Uuid;
 
 use crate::{
     error::ApiError,
-    models::{CreateVehicle, CreateVehicleResponse, Vehicle},
+    types::vehicle::{
+        api::{CreateVehicleResponse, ReadVehicleResponse, UpdateVehicleResponse},
+        db::Vehicle,
+    },
 };
 
-pub async fn read(pool: &PgPool, id: Uuid) -> Result<Vehicle, ApiError> {
+pub async fn read(pool: &PgPool, id: Uuid) -> Result<ReadVehicleResponse, ApiError> {
     let sql = "SELECT * FROM vehicles WHERE id = $1";
 
     let vehicle = query_as::<_, Vehicle>(sql).bind(id).fetch_one(pool).await?;
 
-    Ok(vehicle)
+    Ok(vehicle.try_into()?)
 }
 
-pub async fn list(pool: &PgPool) -> Result<Vec<Vehicle>, ApiError> {
+pub async fn list(pool: &PgPool) -> Result<Vec<ReadVehicleResponse>, ApiError> {
     let sql = "SELECT * FROM vehicles";
     let vehicles = sqlx::query_as::<_, Vehicle>(sql).fetch_all(pool).await?;
-    Ok(vehicles)
+
+    vehicles.into_iter().map(TryInto::try_into).collect()
 }
 
-pub async fn create(
-    pool: &PgPool,
-    create_vehicle_input: CreateVehicle,
-) -> Result<CreateVehicleResponse, ApiError> {
+pub async fn create(pool: &PgPool, vehicle: Vehicle) -> Result<CreateVehicleResponse, ApiError> {
     let sql = "INSERT INTO vehicles (make, model, year, owner_id, odometer_unit) VALUES ($1, $2, $3, $4, $5) RETURNING id";
     let res = query(sql)
-        .bind(create_vehicle_input.make)
-        .bind(create_vehicle_input.model)
-        .bind(create_vehicle_input.year as i32)
-        .bind(create_vehicle_input.owner_id)
-        .bind(create_vehicle_input.odometer_unit)
+        .bind(vehicle.make)
+        .bind(vehicle.model)
+        .bind(vehicle.year)
+        .bind(vehicle.owner_id)
+        .bind(vehicle.odometer_unit)
         .fetch_one(pool)
         .await?;
 
@@ -42,8 +43,8 @@ pub async fn create(
 pub async fn update(
     pool: &PgPool,
     vehicle_id: Uuid,
-    update_vehicle_input: CreateVehicle,
-) -> Result<Vehicle, ApiError> {
+    vehicle: Vehicle,
+) -> Result<UpdateVehicleResponse, ApiError> {
     let sql = "
         UPDATE vehicles 
         SET 
@@ -55,15 +56,16 @@ pub async fn update(
         WHERE id = $6 
         RETURNING *";
     let updated_vehicle = query_as::<_, Vehicle>(sql)
-        .bind(update_vehicle_input.make)
-        .bind(update_vehicle_input.model)
-        .bind(update_vehicle_input.year as i32)
-        .bind(update_vehicle_input.owner_id)
-        .bind(update_vehicle_input.odometer_unit)
+        .bind(vehicle.make)
+        .bind(vehicle.model)
+        .bind(vehicle.year)
+        .bind(vehicle.owner_id)
+        .bind(vehicle.odometer_unit)
         .bind(vehicle_id)
         .fetch_one(pool)
         .await?;
-    Ok(updated_vehicle)
+
+    Ok(updated_vehicle.try_into()?)
 }
 
 pub async fn delete(pool: &PgPool, vehicle_id: Uuid) -> Result<(), ApiError> {
