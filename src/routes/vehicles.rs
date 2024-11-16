@@ -29,7 +29,7 @@ async fn read(
     State(appstate): State<AppState>,
     Path(vehicle_id): Path<Uuid>,
 ) -> Result<ReadVehicleResponse, ApiError> {
-    read_vehicle(&appstate.db, vehicle_id).await
+    read_vehicle(&appstate.db, &vehicle_id).await
 }
 
 async fn create(
@@ -46,7 +46,7 @@ async fn update(
     Json(body): Json<UpdateVehicleBody>,
 ) -> Result<UpdateVehicleResponse, ApiError> {
     let db_vehicle = DbVehicle::from_api_type(&vehicle_id, body);
-    update_vehicle(&appstate.db, vehicle_id, db_vehicle).await
+    update_vehicle(&appstate.db, db_vehicle).await
 }
 
 async fn delete_route(
@@ -63,8 +63,4 @@ pub fn build_router() -> Router<AppState> {
         .route("/:vehicle_id", get(read))
         .route("/:vehicle_id", put(update))
         .route("/:vehicle_id", delete(delete_route))
-        .nest(
-            "/:vehicle_id/log_records",
-            super::log_records::build_router(),
-        )
 }

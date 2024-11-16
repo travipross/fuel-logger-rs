@@ -11,6 +11,7 @@ pub mod api {
     #[derive(Debug, PartialEq, serde::Deserialize, fake::Dummy)]
     pub struct CreateLogRecordBody {
         pub date: Option<chrono::DateTime<chrono::Utc>>,
+        pub vehicle_id: uuid::Uuid,
         #[serde(flatten)]
         pub log_type: LogType,
         #[dummy(faker = "0..500000")]
@@ -38,6 +39,7 @@ pub mod api {
     #[derive(Debug, PartialEq, serde::Serialize, fake::Dummy)]
     pub struct ReadLogRecordResponse {
         pub id: uuid::Uuid,
+        pub vehicle_id: uuid::Uuid,
         pub date: chrono::DateTime<chrono::Utc>,
         #[serde(flatten)]
         pub log_type: LogType,
@@ -67,6 +69,7 @@ pub mod api {
         fn try_from(value: DbLogRecord) -> Result<Self, Self::Error> {
             Ok(Self {
                 id: value.id,
+                vehicle_id: value.vehicle_id,
                 date: value.date,
                 log_type: value.log_type,
                 odometer: u16::try_from(value.odometer)
@@ -118,14 +121,10 @@ pub mod db {
     }
 
     impl LogRecord {
-        pub fn from_api_type(
-            log_record_id: &uuid::Uuid,
-            vehicle_id: &uuid::Uuid,
-            body: ApiCreateLogRecordBody,
-        ) -> Self {
+        pub fn from_api_type(log_record_id: &uuid::Uuid, body: ApiCreateLogRecordBody) -> Self {
             Self {
                 id: *log_record_id,
-                vehicle_id: *vehicle_id,
+                vehicle_id: body.vehicle_id,
                 date: body.date.unwrap_or_else(chrono::Utc::now),
                 log_type: body.log_type,
                 odometer: body.odometer.into(),

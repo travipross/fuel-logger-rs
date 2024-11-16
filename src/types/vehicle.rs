@@ -7,6 +7,7 @@ pub mod api {
     // Create
     #[derive(Debug, serde::Deserialize, fake::Dummy, PartialEq)]
     pub struct CreateVehicleBody {
+        pub owner_id: uuid::Uuid,
         #[dummy(faker = "fake::faker::company::en::CompanyName()")]
         pub make: String,
         #[dummy(faker = "fake::faker::company::en::Buzzword()")]
@@ -36,6 +37,7 @@ pub mod api {
     #[derive(Debug, serde::Serialize, fake::Dummy)]
     pub struct ReadVehicleResponse {
         pub id: uuid::Uuid,
+        pub owner_id: uuid::Uuid,
         #[dummy(faker = "fake::faker::company::en::CompanyName()")]
         pub make: String,
         #[dummy(faker = "fake::faker::company::en::Buzzword()")]
@@ -51,6 +53,7 @@ pub mod api {
         fn try_from(value: DbVehicle) -> Result<Self, Self::Error> {
             Ok(Self {
                 id: value.id,
+                owner_id: value.owner_id,
                 make: value.make,
                 model: value.model,
                 year: u16::try_from(value.year).map_err(|e| ApiError::Conversion(e.to_string()))?,
@@ -107,6 +110,7 @@ pub mod api {
             let sample_record = Faker.fake::<ReadVehicleResponse>();
 
             let expected = json!({
+                "owner_id": sample_record.owner_id,
                 "make": sample_record.make,
                 "model": sample_record.model,
                 "year": sample_record.year,
@@ -128,8 +132,10 @@ pub mod api {
             let model = Faker.fake::<String>();
             let year = Faker.fake::<u16>();
             let odometer_unit = Faker.fake::<Option<OdometerUnit>>();
+            let owner_id = Faker.fake::<uuid::Uuid>();
 
             let json = json!({
+                "owner_id": owner_id,
                 "make": make,
                 "model": model,
                 "year": year,
@@ -137,6 +143,7 @@ pub mod api {
             });
 
             let expected = CreateVehicleBody {
+                owner_id,
                 make,
                 model,
                 year,
@@ -156,14 +163,17 @@ pub mod api {
             let make = Faker.fake::<String>();
             let model = Faker.fake::<String>();
             let year = Faker.fake::<u16>();
+            let owner_id = Faker.fake::<uuid::Uuid>();
 
             let json = json!({
+                "owner_id": owner_id,
                 "make": make,
                 "model": model,
                 "year": year,
             });
 
             let expected = CreateVehicleBody {
+                owner_id,
                 make,
                 model,
                 year,
@@ -186,6 +196,7 @@ pub mod db {
     #[derive(Debug, PartialEq, serde::Deserialize, fake::Dummy, sqlx::FromRow)]
     pub struct Vehicle {
         pub id: uuid::Uuid,
+        pub owner_id: uuid::Uuid,
         #[dummy(faker = "fake::faker::company::en::CompanyName()")]
         pub make: String,
         #[dummy(faker = "fake::faker::company::en::Buzzword()")]
@@ -193,7 +204,6 @@ pub mod db {
         #[dummy(faker = "1950..2030")]
         pub year: i32,
         #[serde(skip)]
-        // TODO: Add owner_id
         pub odometer_unit: OdometerUnit,
     }
 
@@ -201,6 +211,7 @@ pub mod db {
         pub fn from_api_type(vehicle_id: &uuid::Uuid, body: ApiCreateVehicleBody) -> Self {
             Self {
                 id: *vehicle_id,
+                owner_id: body.owner_id,
                 make: body.make,
                 model: body.model,
                 year: body.year.into(),

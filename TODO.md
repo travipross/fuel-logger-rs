@@ -1,0 +1,7 @@
+- [ ] Make controllers take API models as inputs
+- [ ] Rewrite db models to better reflect table structure
+- [ ] Add tracing
+- [ ] Write custom JSON extractor to better handle errors
+- [ ] unit tests
+    - [ ] api serialization/deserialization
+    - [ ] database read/write

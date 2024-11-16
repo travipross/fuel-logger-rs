@@ -31,9 +31,9 @@ async fn main() -> anyhow::Result<()> {
     // Build main app router
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
-        .nest("/vehicles", vehicles::build_router())
-        .nest("/logs", log_records::build_router())
         .nest("/users", users::build_router())
+        .nest("/vehicles", vehicles::build_router())
+        .nest("/log_records", log_records::build_router())
         .with_state(state);
 
     let port = env::var("PORT").unwrap_or("3000".to_owned());
