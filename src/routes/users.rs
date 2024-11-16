@@ -56,3 +56,72 @@ pub fn build_router() -> Router<AppState> {
         .route("/:user_id", put(update))
         .route("/:user_id", delete(delete_route))
 }
+
+#[cfg(test)]
+mod router_tests {
+    use super::*;
+    use serde_json::json;
+    use tower::ServiceExt;
+
+    mod create {
+        use std::usize;
+
+        use axum::{
+            body::Body,
+            http::{Method, Request, StatusCode},
+        };
+        use fake::{faker, Fake};
+        use sqlx::PgPool;
+
+        use super::*;
+
+        #[sqlx::test]
+        async fn can_create_record_with_valid_inputs(pool: PgPool) {
+            // Arrange
+            let router = build_router().with_state(AppState { db: pool });
+
+            let first_name = faker::name::en::FirstName().fake::<String>();
+            let last_name = faker::name::en::LastName().fake::<String>();
+            let username = faker::internet::en::Username().fake::<String>();
+            let email = faker::internet::en::FreeEmail().fake::<String>();
+
+            let input = json!({
+                "first_name": first_name,
+                "last_name": last_name,
+                "username": username,
+                "email": email,
+            });
+
+            // Act
+            let req = Request::builder()
+                .uri("/")
+                .method(Method::POST)
+                .header("Content-Type", "application/json")
+                .body(Body::from(
+                    serde_json::to_vec(&input).expect("could not form request"),
+                ))
+                .expect("could not build request");
+
+            let res = router.oneshot(req).await.expect("could not be called");
+
+            // Assert
+            assert_eq!(res.status(), StatusCode::CREATED);
+            let body = axum::body::to_bytes(res.into_body(), usize::MAX)
+                .await
+                .expect("could not convert to bytes");
+            let body_json =
+                serde_json::from_slice::<serde_json::Value>(&body).expect("could not extract");
+            let body_obj = body_json
+                .as_object()
+                .expect("could not convert to object")
+                .clone();
+
+            assert_eq!(body_obj.keys().len(), 1);
+            assert!(body_obj
+                .keys()
+                .collect::<Vec<_>>()
+                .contains(&&"id".to_owned()));
+            assert!(body_obj.get("id").is_some());
+        }
+    }
+}

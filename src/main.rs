@@ -10,11 +10,11 @@ use std::{env, time::Duration};
 use anyhow::Context;
 use axum::{routing::get, serve, Router};
 use routes::{log_records, users, vehicles};
-use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use sqlx::postgres::{PgPool, PgPoolOptions};
 
 #[derive(Clone)]
 pub struct AppState {
-    db: Pool<Postgres>,
+    db: PgPool,
 }
 
 #[tokio::main]
