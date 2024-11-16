@@ -10,7 +10,7 @@ CREATE TABLE users (
 
 CREATE TABLE vehicles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    owner_id UUID REFERENCES users(id),
+    owner_id UUID REFERENCES users(id) NOT NULL,
     make TEXT NOT NULL,
     model TEXT NOT NULL,
     year INTEGER NOT NULL,
@@ -19,15 +19,15 @@ CREATE TABLE vehicles (
 
 CREATE TABLE log_records (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    vehicle_id UUID REFERENCES vehicles(id),
+    vehicle_id UUID REFERENCES vehicles(id) NOT NULL,
     log_date TIMESTAMP WITH TIME ZONE NOT NULL,
     odometer INTEGER NOT NULL,
     log_type TEXT NOT NULL,
     fuel_amount REAL,
     notes TEXT,
-    rotation_type TEXT,
+    tire_rotation_type TEXT,
     tire_type TEXT,
-    new_tires TEXT,
+    new_tires BOOLEAN,
     brake_location TEXT,
     brake_part TEXT,
     fluid_type TEXT

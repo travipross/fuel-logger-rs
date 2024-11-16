@@ -63,4 +63,8 @@ pub fn build_router() -> Router<AppState> {
         .route("/:vehicle_id", get(read))
         .route("/:vehicle_id", put(update))
         .route("/:vehicle_id", delete(delete_route))
+        .nest(
+            "/:vehicle_id/log_records",
+            super::log_records::build_router(),
+        )
 }

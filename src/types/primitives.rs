@@ -1,46 +1,65 @@
 use std::str::FromStr;
 
 use anyhow::anyhow;
-use fake::Dummy;
-use serde::{Deserialize, Serialize};
 
 use crate::error::ApiError;
 
-#[derive(Debug, Serialize, Deserialize, Dummy, Clone, PartialEq)]
-#[serde(tag = "rotation_type")]
+#[derive(
+    Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, fake::Dummy, sqlx::Type,
+)]
+#[serde(tag = "tire_rotation_type")]
 #[serde(rename_all = "snake_case")]
+#[sqlx(rename_all = "snake_case")]
+#[sqlx(type_name = "text")]
 pub enum TireRotationType {
     FrontRear,
     Side,
     Diagonal,
 }
 
-#[derive(Debug, Serialize, Deserialize, Dummy, Clone, PartialEq)]
+#[derive(
+    Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, fake::Dummy, sqlx::Type,
+)]
 #[serde(rename_all = "snake_case")]
+#[sqlx(rename_all = "snake_case")]
+#[sqlx(type_name = "text")]
 pub enum TireType {
     Summer,
     Winter,
     AllSeason,
 }
 
-#[derive(Debug, Serialize, Deserialize, Dummy, Clone, PartialEq)]
+#[derive(
+    Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, fake::Dummy, sqlx::Type,
+)]
 #[serde(rename_all = "snake_case")]
+#[sqlx(rename_all = "snake_case")]
+#[sqlx(type_name = "text")]
 pub enum BrakeLocation {
     Front,
     Rear,
     All,
 }
 
-#[derive(Debug, Serialize, Deserialize, Dummy, Clone, PartialEq)]
+#[derive(
+    Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, fake::Dummy, sqlx::Type,
+)]
 #[serde(rename_all = "snake_case")]
+#[sqlx(rename_all = "snake_case")]
+#[sqlx(type_name = "text")]
 pub enum BrakeComponent {
     Rotors,
     Calipers,
     Both,
 }
 
-#[derive(Debug, Serialize, Deserialize, Dummy, Clone, PartialEq)]
+#[derive(
+    Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, fake::Dummy, sqlx::Type,
+)]
 #[serde(rename_all = "snake_case")]
+#[serde(tag = "fluid_type")]
+#[sqlx(rename_all = "snake_case")]
+#[sqlx(type_name = "text")]
 pub enum FluidType {
     Wiper,
     Transmission,
@@ -48,7 +67,7 @@ pub enum FluidType {
     Coolant,
 }
 
-#[derive(Debug, Serialize, Deserialize, Dummy, Default, PartialEq)]
+#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize, fake::Dummy)]
 pub enum OdometerUnit {
     #[serde(rename = "km")]
     #[default]

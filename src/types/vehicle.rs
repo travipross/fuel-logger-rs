@@ -4,6 +4,7 @@ pub mod api {
     use crate::types::primitives::OdometerUnit;
     use axum::{http::StatusCode, response::IntoResponse, Json};
 
+    // Create
     #[derive(Debug, serde::Deserialize, fake::Dummy, PartialEq)]
     pub struct CreateVehicleBody {
         #[dummy(faker = "fake::faker::company::en::CompanyName()")]
@@ -15,8 +16,23 @@ pub mod api {
         pub odometer_unit: Option<OdometerUnit>,
     }
 
-    pub type UpdateVehicleBody = CreateVehicleBody;
+    #[derive(Debug, serde::Serialize, fake::Dummy)]
+    pub struct CreateVehicleResponse {
+        pub id: uuid::Uuid,
+    }
 
+    impl IntoResponse for CreateVehicleResponse {
+        fn into_response(self) -> axum::response::Response {
+            (
+                StatusCode::CREATED,
+                [("location", format!("/vehicles/{}", self.id))],
+                Json(self),
+            )
+                .into_response()
+        }
+    }
+
+    // Read
     #[derive(Debug, serde::Serialize, fake::Dummy)]
     pub struct ReadVehicleResponse {
         pub id: uuid::Uuid,
@@ -49,6 +65,7 @@ pub mod api {
         }
     }
 
+    // List
     #[derive(Debug, serde::Serialize, fake::Dummy)]
     pub struct ListVehiclesResponse(Vec<ReadVehicleResponse>);
 
@@ -64,22 +81,11 @@ pub mod api {
         }
     }
 
-    #[derive(Debug, serde::Serialize, fake::Dummy)]
-    pub struct CreateVehicleResponse {
-        pub id: uuid::Uuid,
-    }
+    // Update
+    pub type UpdateVehicleBody = CreateVehicleBody;
+    pub type UpdateVehicleResponse = ReadVehicleResponse;
 
-    impl IntoResponse for CreateVehicleResponse {
-        fn into_response(self) -> axum::response::Response {
-            (
-                StatusCode::CREATED,
-                [("location", format!("/vehicles/{}", self.id))],
-                Json(self),
-            )
-                .into_response()
-        }
-    }
-
+    // Delete
     #[derive(Debug, serde::Serialize, fake::Dummy)]
     pub struct DeleteVehicleResponse;
 
@@ -88,8 +94,6 @@ pub mod api {
             (StatusCode::NO_CONTENT).into_response()
         }
     }
-
-    pub type UpdateVehicleResponse = ReadVehicleResponse;
 
     #[cfg(test)]
     mod api_type_tests {

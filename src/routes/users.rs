@@ -6,10 +6,7 @@ use axum::{
 use uuid::Uuid;
 
 use crate::{
-    controllers::user::{
-        create as create_user, delete as delete_user, list as list_users, read as read_user,
-        update as update_user,
-    },
+    controllers::user as controller,
     error::ApiError,
     types::user::{
         api::{
@@ -22,14 +19,14 @@ use crate::{
 };
 
 async fn list(State(appstate): State<AppState>) -> Result<ListUsersResponse, ApiError> {
-    list_users(&appstate.db).await
+    controller::list(&appstate.db).await
 }
 
 async fn read(
     State(appstate): State<AppState>,
     Path(user_id): Path<Uuid>,
 ) -> Result<ReadUserResponse, ApiError> {
-    read_user(&appstate.db, user_id).await
+    controller::read(&appstate.db, user_id).await
 }
 
 async fn create(
@@ -37,7 +34,7 @@ async fn create(
     Json(body): Json<CreateUserBody>,
 ) -> Result<CreateUserResponse, ApiError> {
     let db_user = DbUser::from_api_type(&Uuid::new_v4(), body);
-    create_user(&appstate.db, db_user).await
+    controller::create(&appstate.db, db_user).await
 }
 
 async fn update(
@@ -46,14 +43,14 @@ async fn update(
     Json(body): Json<UpdateUserBody>,
 ) -> Result<UpdateUserResponse, ApiError> {
     let db_user = DbUser::from_api_type(&user_id, body);
-    update_user(&appstate.db, user_id, db_user).await
+    controller::update(&appstate.db, user_id, db_user).await
 }
 
 async fn delete_route(
     Path(user_id): Path<Uuid>,
     State(appstate): State<AppState>,
 ) -> Result<DeleteUserResponse, ApiError> {
-    delete_user(&appstate.db, user_id).await
+    controller::delete(&appstate.db, user_id).await
 }
 
 pub fn build_router() -> Router<AppState> {

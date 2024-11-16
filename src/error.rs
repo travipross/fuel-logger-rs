@@ -16,11 +16,14 @@ pub enum ApiError {
     #[error("{0}")]
     Conversion(String),
 
-    #[error["the resource was not found"]]
+    #[error("the resource was not found")]
     ResourceNotFound,
 
-    #[error["the requested inputs violate a unique constraint"]]
+    #[error("the requested inputs violate a unique constraint")]
     UniqueConstraintViolation { detail: Option<String> },
+
+    #[error("log record is of the wrong type and can't be updated")]
+    WrongLogRecordType,
 }
 impl From<sqlx::Error> for ApiError {
     fn from(value: sqlx::Error) -> Self {
@@ -46,10 +49,13 @@ impl From<sqlx::Error> for ApiError {
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let (status, msg) = match self {
-            Self::Database(_) => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "database error".to_owned(),
-            ),
+            Self::Database(e) => {
+                dbg!(e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "database error".to_owned(),
+                )
+            }
             Self::Conversion(_) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "problem converting types".to_owned(),
@@ -59,6 +65,7 @@ impl IntoResponse for ApiError {
                 StatusCode::CONFLICT,
                 detail.unwrap_or("unknown violation".to_owned()),
             ),
+            Self::WrongLogRecordType => (StatusCode::BAD_REQUEST, self.to_string()),
         };
 
         (status, Json(json!({"error": msg}))).into_response()

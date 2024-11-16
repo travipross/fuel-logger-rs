@@ -47,8 +47,7 @@ pub async fn create(pool: &PgPool, user: DbUser) -> Result<CreateUserResponse, A
         .bind(user.username)
         .bind(user.email)
         .fetch_one(pool)
-        .await
-        .map_err(|e| e)?;
+        .await?;
 
     let id = res.try_get::<Uuid, _>("id")?;
 
