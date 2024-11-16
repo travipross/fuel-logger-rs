@@ -1,17 +1,23 @@
 mod controllers;
+mod error;
 mod models;
 mod routes;
 
 use std::{env, time::Duration};
 
 use axum::{routing::get, Router};
+use fake::{Fake, Faker};
+use models::User;
 use routes::{log_records, vehicles};
-use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use sqlx::{postgres::PgPoolOptions, query, Pool, Postgres};
+use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct AppState {
     db: Pool<Postgres>,
 }
+
+pub const DEFAULT_USER_ID: &str = "50c5ab2e-4c29-4583-a698-5902b861b628";
 
 #[tokio::main]
 async fn main() {
@@ -23,6 +29,10 @@ async fn main() {
         .connect(&database_url)
         .await
         .expect("can't connect to database");
+
+    let mut fake_user = Faker.fake::<User>();
+    fake_user.id = Uuid::parse_str(DEFAULT_USER_ID).unwrap();
+    query!("INSERT INTO users (id, first_name, last_name, username, email) VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING", fake_user.id, fake_user.first_name, fake_user.last_name, fake_user.username, fake_user.email).execute(&pool).await.unwrap();
 
     let state = AppState { db: pool };
 
