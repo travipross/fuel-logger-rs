@@ -17,7 +17,7 @@ pub struct CreateLogRecordBody {
     #[serde(flatten)]
     pub log_type: LogType,
     #[dummy(faker = "0..500000")]
-    pub odometer: u16,
+    pub odometer: u32,
     pub notes: Option<String>,
 }
 
@@ -46,7 +46,7 @@ pub struct ReadLogRecordResponse {
     #[serde(flatten)]
     pub log_type: LogType,
     #[dummy(faker = "0..500000")]
-    pub odometer: u16,
+    pub odometer: u32,
     pub notes: Option<String>,
 }
 
@@ -92,7 +92,7 @@ impl TryFrom<DbLogRecord> for ReadLogRecordResponse {
             vehicle_id: value.vehicle_id,
             date: value.date,
             log_type: value.log_type,
-            odometer: u16::try_from(value.odometer)
+            odometer: u32::try_from(value.odometer)
                 .map_err(|e| ApiError::Conversion(e.to_string()))?,
             notes: value.notes,
         })
