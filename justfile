@@ -11,7 +11,7 @@ default:
 [group('database')]
 bootstrap: && init-env
     # Install dev dependencies of project
-    cargo install cargo-watch sqlx-cli
+    cargo install cargo-watch sqlx-cli git-cliff
 
 # Perform linting with clippy
 [group('dev')]
@@ -60,6 +60,12 @@ alias format := fmt
 clean:
     cargo clean
 alias cl := clean
+
+# Update Changelog
+[group('dev')]
+update-changelog *args:
+    git-cliff {{args}}
+alias chl := update-changelog
 
 # Enable git hooks
 [group('setup')]
