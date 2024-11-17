@@ -1,21 +1,8 @@
-mod controllers;
-mod error;
-mod models;
-mod routes;
-mod types;
-mod utils;
-
-use std::{env, time::Duration};
-
 use anyhow::Context;
-use axum::{routing::get, serve, Router};
-use routes::{log_records, users, vehicles};
-use sqlx::postgres::{PgPool, PgPoolOptions};
-
-#[derive(Clone)]
-pub struct AppState {
-    db: PgPool,
-}
+use axum::serve;
+use fuel_logger_rs::build_router;
+use sqlx::postgres::PgPoolOptions;
+use std::{env, time::Duration};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -28,15 +15,8 @@ async fn main() -> anyhow::Result<()> {
         .await
         .context("can't connect to database")?;
 
-    let state = AppState { db: pool };
-
     // Build main app router
-    let app = Router::new()
-        .route("/", get(|| async { "Hello, World!" }))
-        .nest("/users", users::build_router())
-        .nest("/vehicles", vehicles::build_router())
-        .nest("/log_records", log_records::build_router())
-        .with_state(state);
+    let app = build_router(&pool);
 
     let port = env::var("PORT").unwrap_or("3000".to_owned());
 
