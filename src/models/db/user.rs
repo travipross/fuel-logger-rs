@@ -2,7 +2,7 @@ use uuid::Uuid;
 
 use crate::models::api::CreateUserBody as ApiCreateUserBody;
 
-#[derive(Debug, serde::Serialize, fake::Dummy, sqlx::FromRow)]
+#[derive(Debug, Clone, PartialEq, fake::Dummy, sqlx::FromRow)]
 pub struct User {
     pub id: Uuid,
     #[dummy(faker = "fake::faker::name::en::FirstName()")]

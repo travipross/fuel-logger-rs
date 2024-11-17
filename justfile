@@ -16,13 +16,13 @@ bootstrap: && init-env
 # Perform linting with clippy
 [group('dev')]
 clippy *args:
-    cargo clippy {{args}}
+    cargo  clippy --all-features --all-targets {{args}}
 alias lint := clippy
 
 # Check code
 [group('dev')]
 check *args:
-    cargo check {{args}}
+    cargo  check --all-features --all-targets {{args}}
 alias ch := check
 
 # Build executable
@@ -34,7 +34,7 @@ alias b := build
 # Run tests
 [group('dev')]
 test *args:
-    cargo test {{args}}
+    cargo  test --all-features --all-targets {{args}}
 alias t := test
 
 # Build and run program
@@ -138,7 +138,13 @@ init-env:
         },
         "rust-analyzer.runnables.extraEnv": {
             "DATABASE_URL": "${DATABASE_URL}"
-        }
+        },
+        "rust-analyzer.cargo.extraArgs": [
+            "--all-features"
+        ],
+        "rust-analyzer.runnables.extraArgs": [
+            "--all-features"
+        ]
     }
     
     EOF)

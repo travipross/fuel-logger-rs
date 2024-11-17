@@ -22,13 +22,13 @@ pub mod test_utils {
         use uuid::Uuid;
 
         pub async fn seed_user_and_vehicle(pool: &PgPool) -> Uuid {
-            let user_id = crate::controllers::user::create(&pool, Faker.fake())
+            let user_id = crate::controllers::user::create(pool, Faker.fake())
                 .await
                 .expect("failed to seed user")
                 .id;
 
             crate::controllers::vehicle::create(
-                &pool,
+                pool,
                 CreateVehicleBody {
                     owner_id: user_id,
                     ..Faker.fake()
@@ -40,7 +40,7 @@ pub mod test_utils {
         }
 
         pub async fn seed_user(pool: &PgPool) -> Uuid {
-            crate::controllers::user::create(&pool, Faker.fake())
+            crate::controllers::user::create(pool, Faker.fake())
                 .await
                 .expect("failed to seed user")
                 .id

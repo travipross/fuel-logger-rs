@@ -144,12 +144,13 @@ impl TryFrom<String> for OdometerUnit {
     }
 }
 
-impl ToString for OdometerUnit {
-    fn to_string(&self) -> String {
-        match self {
-            Self::Metric => "km".to_owned(),
-            Self::Imperial => "mi".to_owned(),
-        }
+impl std::fmt::Display for OdometerUnit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Self::Metric => "km",
+            Self::Imperial => "mi",
+        };
+        write!(f, "{s}")
     }
 }
 
