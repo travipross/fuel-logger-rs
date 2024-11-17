@@ -2,7 +2,7 @@ use uuid::Uuid;
 
 use crate::{models::api::CreateVehicleBody as ApiCreateVehicleBody, types::OdometerUnit};
 
-#[derive(Debug, PartialEq, serde::Deserialize, fake::Dummy, sqlx::FromRow)]
+#[derive(Debug, Clone, PartialEq, fake::Dummy, sqlx::FromRow)]
 pub struct Vehicle {
     pub id: Uuid,
     pub owner_id: Uuid,
@@ -12,7 +12,6 @@ pub struct Vehicle {
     pub model: String,
     #[dummy(faker = "1950..2030")]
     pub year: i32,
-    #[serde(skip)]
     pub odometer_unit: OdometerUnit,
 }
 
