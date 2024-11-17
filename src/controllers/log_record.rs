@@ -38,7 +38,7 @@ pub async fn create(
     pool: &PgPool,
     body: CreateLogRecordBody,
 ) -> Result<CreateLogRecordResponse, ApiError> {
-    let log_record = DbLogRecord::from_api_type(&Uuid::new_v4(), body);
+    let log_record = DbLogRecord::from_api_type(&Uuid::new_v4(), body)?;
 
     // Initialize query builder with INSERT statement
     let mut qb = QueryBuilder::<sqlx::Postgres>::new("INSERT INTO log_records(");
@@ -138,7 +138,7 @@ pub async fn update(
 ) -> Result<UpdateLogRecordResponse, ApiError> {
     let existing_val = read(pool, log_record_id).await?;
     if std::mem::discriminant(&body.log_type) == std::mem::discriminant(&existing_val.log_type) {
-        let log_record = DbLogRecord::from_api_type(log_record_id, body);
+        let log_record = DbLogRecord::from_api_type(log_record_id, body)?;
         let mut qb = QueryBuilder::<sqlx::Postgres>::new("UPDATE log_records SET ");
         let mut separated = qb.separated(", ");
 
