@@ -22,3 +22,8 @@ For convenience, a DevContainer configuration has been provided. Run in VSCode u
 On first launch, dev dependencies will automatically be installed via `just bootstrap` as described above.
 
 See [here](https://code.visualstudio.com/docs/devcontainers/containers) for more information on configuring Dev Containers in VSCode.
+
+## Changelog & Commits
+Changelog generation is performed via [`git-cliff`](https://git-cliff.org/docs/), by parsing conventional commit messages.
+
+Please ensure commits follow the [conventional commit format](https://www.conventionalcommits.org/en/v1.0.0/) in order for them to be included in changelogs.
