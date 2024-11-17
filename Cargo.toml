@@ -2,6 +2,10 @@
 name = "fuel-logger-rs"
 version = "0.1.2"
 edition = "2021"
+license = "MIT"
+description = "A REST API to be used as a vehicle logbook"
+repository = "https://github.com/travipross/fuel-logger-rs"
+documentation = "https://github.com/travipross/fuel-logger-r"
 
 [dependencies]
 anyhow = "1.0.86"
