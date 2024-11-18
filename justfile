@@ -110,7 +110,7 @@ db-migrate-down:
 # Connect to database
 [group('database')]
 db-connect:
-    docker compose -f {{docker-compose-path}} exec db psql ${DATABASE_URL}
+    docker compose -f {{docker-compose-path}} exec db psql ${VL__DATABASE_URL}
 
 # Create new migration
 [group('database')]
@@ -140,10 +140,10 @@ init-env:
         SETTINGS_JSON=$(cat <<EOF
     {
         "rust-analyzer.cargo.extraEnv": {
-            "DATABASE_URL": "${DATABASE_URL}"
+            "VL__DATABASE_URL": "${DATABASE_URL}"
         },
         "rust-analyzer.runnables.extraEnv": {
-            "DATABASE_URL": "${DATABASE_URL}"
+            "VL__DATABASE_URL": "${DATABASE_URL}"
         },
         "rust-analyzer.cargo.extraArgs": [
             "--all-features"
@@ -168,5 +168,6 @@ init-env:
     POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     POSTGRES_USER=${POSTGRES_USER}
     DATABASE_URL=${DATABASE_URL}
+    VL__DATABASE_URL=${DATABASE_URL}
     EOF
     fi

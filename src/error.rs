@@ -24,6 +24,9 @@ pub enum ApiError {
 
     #[error("log record is of the wrong type and can't be updated")]
     WrongLogRecordType,
+
+    #[error("{0}")]
+    Configuration(#[from] config::ConfigError),
 }
 impl From<sqlx::Error> for ApiError {
     fn from(value: sqlx::Error) -> Self {
@@ -49,13 +52,10 @@ impl From<sqlx::Error> for ApiError {
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let (status, msg) = match self {
-            Self::Database(e) => {
-                dbg!(e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "database error".to_owned(),
-                )
-            }
+            Self::Database(_) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "database error".to_owned(),
+            ),
             Self::Conversion(_) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "problem converting types".to_owned(),
@@ -66,6 +66,10 @@ impl IntoResponse for ApiError {
                 detail.unwrap_or("unknown violation".to_owned()),
             ),
             Self::WrongLogRecordType => (StatusCode::BAD_REQUEST, self.to_string()),
+            Self::Configuration(_) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "problem parsing configuration".to_owned(),
+            ),
         };
 
         (status, Json(json!({"error": msg}))).into_response()
