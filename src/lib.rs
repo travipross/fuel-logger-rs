@@ -1,9 +1,10 @@
-mod controllers;
-mod error;
+pub mod configuration;
+pub mod controllers;
+pub mod error;
 pub mod models;
-mod routes;
+pub mod routes;
 pub mod types;
-mod utils;
+pub mod utils;
 
 use axum::Router;
 use routes::{log_records, users, vehicles};

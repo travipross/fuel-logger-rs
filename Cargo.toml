@@ -11,6 +11,7 @@ documentation = "https://github.com/travipross/fuel-logger-r"
 anyhow = "1.0.86"
 axum = "0.7.5"
 chrono = { version = "0.4.38", features = ["serde"] }
+config = "0.14.1"
 fake = { version = "2.9.2", features = [
     "derive",
     "chrono",
@@ -20,6 +21,7 @@ fake = { version = "2.9.2", features = [
 rand = "0.8.5"
 serde = { version = "1.0.203", features = ["derive"] }
 serde_json = "1.0.117"
+serde_yaml2 = "0.1.2"
 sqlx = { version = "0.8.0", features = [
     "runtime-tokio",
     "tls-rustls",
@@ -34,5 +36,7 @@ uuid = { version = "1.10.0", features = ["v4", "serde"] }
 [dev-dependencies]
 axum-test = "16.4.0"
 itertools = "0.13.0"
+temp-env = "0.3.6"
+tempfile = "3.14.0"
 test-case = "3.3.1"
 tower = { version = "0.5.1", features = ["util"] }
