@@ -23,6 +23,23 @@ On first launch, dev dependencies will automatically be installed via `just boot
 
 See [here](https://code.visualstudio.com/docs/devcontainers/containers) for more information on configuring Dev Containers in VSCode.
 
+## Configuration
+Initialize a configuration file using the following command (substituting your own values for any tokens wrapped in `{{}}`):
+```
+just r -- --init-config > {{your-yaml-config-path}}
+```
+
+Run the server using this configuration file by setting the appropriate environment variable to point at this file:
+```
+export CONFIG_FILE={{your-yaml-config-path}}
+just r
+```
+
+Note that any configuration parameter understood by the config file can be overridden by environment variables using the prefix `VL__`. Structured config heirarchy is denoted using `_`. For example:
+
+- `server.port` can be overridden by setting `VL__SERVER_PORT`
+- `database.url` can be overridden by setting `VL__DATABASE_URL`
+
 ## Changelog & Commits
 Changelog generation is performed via [`git-cliff`](https://git-cliff.org/docs/), by parsing conventional commit messages.
 

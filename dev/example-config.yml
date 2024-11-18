@@ -3,4 +3,4 @@ server:
   host: 0.0.0.0
 
 database:
-  url: postgresql://user:password@localhost:5432
+  url: postgresql://user:password@localhost:5432/fuel
