@@ -11,6 +11,7 @@ documentation = "https://github.com/travipross/fuel-logger-r"
 anyhow = "1.0.86"
 axum = "0.7.5"
 chrono = { version = "0.4.38", features = ["serde"] }
+clap = { version = "4.5.21", features = ["derive"] }
 config = "0.14.1"
 fake = { version = "2.9.2", features = [
     "derive",
