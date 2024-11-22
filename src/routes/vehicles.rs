@@ -1,7 +1,7 @@
 use axum::{
     extract::{Path, State},
     routing::{delete, get, post, put},
-    Json, Router,
+    Router,
 };
 use uuid::Uuid;
 
@@ -11,6 +11,7 @@ use crate::{
         read as read_vehicle, update as update_vehicle,
     },
     error::ApiError,
+    extractors::custom_json::Json,
     models::api::{
         CreateVehicleBody, CreateVehicleResponse, DeleteVehicleResponse, ListVehiclesResponse,
         ReadVehicleResponse, UpdateVehicleBody, UpdateVehicleResponse,
@@ -18,10 +19,12 @@ use crate::{
     AppState,
 };
 
+#[tracing::instrument(name = "vehicles_list_route", skip(appstate), err)]
 async fn list(State(appstate): State<AppState>) -> Result<ListVehiclesResponse, ApiError> {
     list_vehicles(&appstate.db).await
 }
 
+#[tracing::instrument(name = "vehicles_read_route", skip(appstate), err)]
 async fn read(
     State(appstate): State<AppState>,
     Path(vehicle_id): Path<Uuid>,
@@ -29,6 +32,7 @@ async fn read(
     read_vehicle(&appstate.db, &vehicle_id).await
 }
 
+#[tracing::instrument(name = "vehicles_create_route", skip(appstate), err)]
 async fn create(
     State(appstate): State<AppState>,
     Json(body): Json<CreateVehicleBody>,
@@ -36,6 +40,7 @@ async fn create(
     create_vehicle(&appstate.db, body).await
 }
 
+#[tracing::instrument(name = "vehicles_update_route", skip(appstate), err)]
 async fn update(
     State(appstate): State<AppState>,
     Path(vehicle_id): Path<Uuid>,
@@ -44,6 +49,7 @@ async fn update(
     update_vehicle(&appstate.db, &vehicle_id, body).await
 }
 
+#[tracing::instrument(name = "vehicles_delete_route", skip(appstate), err)]
 async fn delete_route(
     Path(vehicle_id): Path<Uuid>,
     State(appstate): State<AppState>,
@@ -51,7 +57,9 @@ async fn delete_route(
     delete_vehicle(&appstate.db, &vehicle_id).await
 }
 
+#[tracing::instrument(name = "build_vehicles_router", skip_all)]
 pub fn build_router() -> Router<AppState> {
+    tracing::debug!("building vehicles router");
     Router::new()
         .route("/", get(list))
         .route("/", post(create))

@@ -1,4 +1,5 @@
 use axum::{
+    extract::rejection::JsonRejection,
     http::StatusCode,
     response::{IntoResponse, Response},
     Json,
@@ -27,6 +28,9 @@ pub enum ApiError {
 
     #[error("{0}")]
     Configuration(#[from] config::ConfigError),
+
+    #[error("{0}")]
+    JsonError(#[from] JsonRejection),
 }
 impl From<sqlx::Error> for ApiError {
     fn from(value: sqlx::Error) -> Self {
@@ -70,8 +74,13 @@ impl IntoResponse for ApiError {
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "problem parsing configuration".to_owned(),
             ),
+            Self::JsonError(e) => (e.status(), e.body_text()),
         };
 
-        (status, Json(json!({"error": msg}))).into_response()
+        (
+            status,
+            Json(json!({"error_msg": msg, "code": status.as_u16()})),
+        )
+            .into_response()
     }
 }
