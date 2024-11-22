@@ -14,30 +14,35 @@ use crate::{
     types::LogType,
 };
 
+#[tracing::instrument(name = "log_record_controller_read", skip(pool), err)]
 pub async fn read(pool: &PgPool, id: &Uuid) -> Result<ReadLogRecordResponse, ApiError> {
+    tracing::debug!("reading log record");
     let sql = "SELECT * FROM log_records WHERE id = $1";
-
     let log_record = query_as::<_, DbLogRecord>(sql)
         .bind(id)
         .fetch_one(pool)
         .await?;
-
+    tracing::info!(?log_record, "found log record");
     log_record.try_into()
 }
 
+#[tracing::instrument(name = "log_record_controller_list", skip(pool), err)]
 pub async fn list(pool: &PgPool) -> Result<ListLogRecordsResponse, ApiError> {
+    tracing::debug!("listing log records");
     let sql = "SELECT * FROM log_records";
     let log_records = sqlx::query_as::<_, DbLogRecord>(sql)
         .fetch_all(pool)
         .await?;
-
+    tracing::info!("number of log records found: {}", log_records.len());
     log_records.into_iter().map(TryInto::try_into).collect()
 }
 
+#[tracing::instrument(name = "log_record_controller_create", skip(pool), err)]
 pub async fn create(
     pool: &PgPool,
     body: CreateLogRecordBody,
 ) -> Result<CreateLogRecordResponse, ApiError> {
+    tracing::debug!("creating log record");
     let log_record = DbLogRecord::from_api_type(&Uuid::new_v4(), body)?;
 
     // Initialize query builder with INSERT statement
@@ -53,6 +58,7 @@ pub async fn create(
     separated.push("notes");
 
     // Conditionally add columns based on log type
+    tracing::debug!("building query for log_type={}", log_record.log_type);
     match log_record.log_type {
         LogType::FuelUp { .. } => {
             separated.push("fuel_amount");
@@ -126,18 +132,23 @@ pub async fn create(
     // Build and execute
     let query_to_execute = qb.build();
     let res = query_to_execute.fetch_one(pool).await?;
+    tracing::debug!(?res, "new log_record row inserted");
+
     let id = res.try_get::<Uuid, _>("id")?;
 
     Ok(CreateLogRecordResponse { id })
 }
 
+#[tracing::instrument(name = "log_record_controller_update", skip(pool), err)]
 pub async fn update(
     pool: &PgPool,
     log_record_id: &Uuid,
     body: UpdateLogRecordBody,
 ) -> Result<UpdateLogRecordResponse, ApiError> {
+    tracing::debug!("reading existing value to determine log type");
     let existing_val = read(pool, log_record_id).await?;
     if std::mem::discriminant(&body.log_type) == std::mem::discriminant(&existing_val.log_type) {
+        tracing::debug!(?body.log_type, "incoming log_type matches existing type");
         let log_record = DbLogRecord::from_api_type(log_record_id, body)?;
         let mut qb = QueryBuilder::<sqlx::Postgres>::new("UPDATE log_records SET ");
         let mut separated = qb.separated(", ");
@@ -201,20 +212,25 @@ pub async fn update(
         updated_record.try_into()
     } else {
         // If types don't match, record shouldn't be updated
+        tracing::debug!(?existing_val.log_type, ?body.log_type, "incoming log_type is different from existing type");
         Err(ApiError::WrongLogRecordType)
     }
 }
 
+#[tracing::instrument(name = "log_record_controller_delete", skip(pool), err)]
 pub async fn delete(
     pool: &PgPool,
     log_record_id: &Uuid,
 ) -> Result<DeleteLogRecordResponse, ApiError> {
+    tracing::debug!("deleting log record");
     let sql = "DELETE FROM log_records WHERE id = $1 RETURNING *";
-    Ok(query(sql)
+    let res = query(sql)
         .bind(log_record_id)
         .fetch_one(pool)
         .await
-        .map(|_| DeleteLogRecordResponse)?)
+        .map(|_| DeleteLogRecordResponse)?;
+    tracing::info!("log record deleted");
+    Ok(res)
 }
 
 #[cfg(test)]
