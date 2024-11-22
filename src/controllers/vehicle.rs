@@ -12,28 +12,32 @@ use crate::{
     },
 };
 
+#[tracing::instrument(name = "vehicle_controller_read", skip(pool), err)]
 pub async fn read(pool: &PgPool, id: &Uuid) -> Result<ReadVehicleResponse, ApiError> {
+    tracing::debug!("reading vehicle");
     let sql = "SELECT * FROM vehicles WHERE id = $1";
-
     let vehicle = query_as::<_, DbVehicle>(sql)
         .bind(id)
         .fetch_one(pool)
         .await?;
-
+    tracing::info!(?vehicle, "vehicle found");
     vehicle.try_into()
 }
 
+#[tracing::instrument(name = "vehicle_controller_list", skip(pool), err)]
 pub async fn list(pool: &PgPool) -> Result<ListVehiclesResponse, ApiError> {
+    tracing::debug!("listing vehicles");
     let sql = "SELECT * FROM vehicles";
     let vehicles = sqlx::query_as::<_, DbVehicle>(sql).fetch_all(pool).await?;
-
     vehicles.into_iter().map(TryInto::try_into).collect()
 }
 
+#[tracing::instrument(name = "vehicle_controller_create", skip(pool), err)]
 pub async fn create(
     pool: &PgPool,
     body: CreateVehicleBody,
 ) -> Result<CreateVehicleResponse, ApiError> {
+    tracing::debug!("creating vehicle");
     let vehicle = DbVehicle::from_api_type(&Uuid::new_v4(), body);
     let sql = "
         INSERT INTO vehicles (
@@ -64,11 +68,13 @@ pub async fn create(
     Ok(CreateVehicleResponse { id })
 }
 
+#[tracing::instrument(name = "vehicle_controller_update", skip(pool), err)]
 pub async fn update(
     pool: &PgPool,
     vehicle_id: &Uuid,
     body: UpdateVehicleBody,
 ) -> Result<UpdateVehicleResponse, ApiError> {
+    tracing::debug!("updating vehicle");
     let vehicle = DbVehicle::from_api_type(vehicle_id, body);
     let sql = "
         UPDATE vehicles 
@@ -91,13 +97,17 @@ pub async fn update(
     updated_vehicle.try_into()
 }
 
+#[tracing::instrument(name = "vehicle_controller_delete", skip(pool), err)]
 pub async fn delete(pool: &PgPool, vehicle_id: &Uuid) -> Result<DeleteVehicleResponse, ApiError> {
+    tracing::debug!("deleting vehicle");
     let sql = "DELETE FROM vehicles WHERE id = $1 RETURNING *";
-    Ok(query(sql)
+    let res = query(sql)
         .bind(vehicle_id)
         .fetch_one(pool)
         .await
-        .map(|_| DeleteVehicleResponse)?)
+        .map(|_| DeleteVehicleResponse)?;
+    tracing::info!("vehicle deleted");
+    Ok(res)
 }
 
 #[cfg(test)]

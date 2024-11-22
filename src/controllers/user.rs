@@ -12,22 +12,27 @@ use crate::{
     },
 };
 
+#[tracing::instrument(name = "user_controller_read", skip(pool), err)]
 pub async fn read(pool: &PgPool, id: &Uuid) -> Result<ReadUserResponse, ApiError> {
+    tracing::debug!("reading user");
     let sql = "SELECT * FROM users WHERE id = $1";
-
     let user = query_as::<_, DbUser>(sql).bind(id).fetch_one(pool).await?;
-
+    tracing::info!(?user, "user found");
     Ok(user.into())
 }
 
+#[tracing::instrument(name = "user_controller_list", skip(pool), err)]
 pub async fn list(pool: &PgPool) -> Result<ListUsersResponse, ApiError> {
+    tracing::debug!("listing users");
     let sql = "SELECT * FROM users";
     let users = sqlx::query_as::<_, DbUser>(sql).fetch_all(pool).await?;
-
+    tracing::info!("number of users found: {}", users.len());
     Ok(users.into_iter().map(Into::into).collect())
 }
 
+#[tracing::instrument(name = "user_controller_create", skip(pool), err)]
 pub async fn create(pool: &PgPool, body: CreateUserBody) -> Result<CreateUserResponse, ApiError> {
+    tracing::debug!("creating user");
     let user = DbUser::from_api_type(&Uuid::new_v4(), body);
     let sql = "
         INSERT INTO users (
@@ -50,16 +55,19 @@ pub async fn create(pool: &PgPool, body: CreateUserBody) -> Result<CreateUserRes
         .fetch_one(pool)
         .await?;
 
+    tracing::info!(?res, "new user created");
     let id = res.try_get::<Uuid, _>("id")?;
 
     Ok(CreateUserResponse { id })
 }
 
+#[tracing::instrument(name = "user_controller_update", skip(pool), err)]
 pub async fn update(
     pool: &PgPool,
     user_id: &Uuid,
     body: UpdateUserBody,
 ) -> Result<UpdateUserResponse, ApiError> {
+    tracing::debug!("updating user");
     let user = DbUser::from_api_type(user_id, body);
     let sql = "
         UPDATE users 
@@ -78,16 +86,21 @@ pub async fn update(
         .bind(user_id)
         .fetch_one(pool)
         .await?;
+    tracing::info!(?updated_user, "user updated");
 
     Ok(updated_user.into())
 }
 
+#[tracing::instrument(name = "user_controller_delete", skip(pool), err)]
 pub async fn delete(pool: &PgPool, user_id: &Uuid) -> Result<DeleteUserResponse, ApiError> {
+    tracing::debug!("deleting user");
     let sql = "DELETE FROM users where id = $1";
     let res = query(sql).bind(user_id).execute(pool).await?;
     if res.rows_affected() < 1 {
+        tracing::error!("no user was deleted");
         Err(ApiError::ResourceNotFound)
     } else {
+        tracing::info!("user deleted");
         Ok(DeleteUserResponse)
     }
 }
