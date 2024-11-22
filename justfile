@@ -34,7 +34,7 @@ alias b := build
 # Run tests
 [group('dev')]
 test *args:
-    cargo  test --all-features --all-targets {{args}}
+    cargo test --all-features --all-targets {{args}}
 alias t := test
 
 # Build and run program

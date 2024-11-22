@@ -1,6 +1,19 @@
+# Server configuration
 server:
+  # Port on which to serve application (Optional)
   port: 3000
+  # Host on which to serve application (Optional)
   host: 0.0.0.0
 
+# Database configuration
 database:
+  # URL to connect to database (Postgres-only)
   url: postgresql://user:password@localhost:5432/fuel
+
+# Logging configuration
+log:
+  # Log level to output to stdout (trace, debug, info, warn, error)
+  level: debug
+
+  # Log format to use (full, pretty, compact)
+  format: full

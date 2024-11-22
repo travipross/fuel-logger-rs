@@ -19,10 +19,68 @@ pub struct DatabaseConfig {
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, fake::Dummy, Default)]
 #[serde(deny_unknown_fields)]
+#[serde(default)]
+pub struct LoggingConfig {
+    pub level: LogLevel,
+    pub format: LogFormat,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, fake::Dummy, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum LogLevel {
+    TRACE,
+    DEBUG,
+    #[default]
+    INFO,
+    WARN,
+    ERROR,
+}
+
+impl std::fmt::Display for LogLevel {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::TRACE => "trace",
+                Self::DEBUG => "debug",
+                Self::INFO => "info",
+                Self::WARN => "warn",
+                Self::ERROR => "error",
+            }
+        )
+    }
+}
+
+impl From<LogLevel> for tracing::level_filters::LevelFilter {
+    fn from(value: LogLevel) -> Self {
+        match value {
+            LogLevel::TRACE => Self::TRACE,
+            LogLevel::DEBUG => Self::DEBUG,
+            LogLevel::INFO => Self::INFO,
+            LogLevel::WARN => Self::WARN,
+            LogLevel::ERROR => Self::ERROR,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, fake::Dummy, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum LogFormat {
+    #[default]
+    Full,
+    Pretty,
+    Compact,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, fake::Dummy, Default)]
+#[serde(deny_unknown_fields)]
 pub struct Configuration {
     #[serde(default)]
     pub server: ServerConfig,
     pub database: DatabaseConfig,
+    #[serde(default)]
+    pub log: LoggingConfig,
 }
 
 pub fn read_config() -> Result<Configuration, ApiError> {
@@ -62,6 +120,15 @@ mod config_tests {
     use super::*;
     use fake::{Fake, Faker};
     use test_utils::write_config_to_temp_yaml_file;
+
+    #[test_case::test_case(LogLevel::TRACE => "\"trace\"".to_owned())]
+    #[test_case::test_case(LogLevel::DEBUG => "\"debug\"".to_owned())]
+    #[test_case::test_case(LogLevel::INFO => "\"info\"".to_owned())]
+    #[test_case::test_case(LogLevel::WARN => "\"warn\"".to_owned())]
+    #[test_case::test_case(LogLevel::ERROR => "\"error\"".to_owned())]
+    fn log_level_enum_serializes_correctly(level: LogLevel) -> String {
+        serde_json::to_string(&level).expect("could not serialize")
+    }
 
     #[test]
     fn test_read_from_env() {
@@ -145,6 +212,7 @@ mod config_tests {
                 ("VL__SERVER_PORT", Some(config.server.port.to_string())),
                 ("VL__SERVER_HOST", Some(config.server.host.to_string())),
                 ("VL__DATABASE_URL", Some(config.database.url.to_string())),
+                ("VL__LOG_LEVEL", Some(config.log.level.to_string())),
             ],
             || {
                 // Act
@@ -161,19 +229,25 @@ mod config_tests {
         // Arrange
         let db_url = Faker.fake::<String>();
 
-        temp_env::with_var("VL__DATABASE_URL", Some(db_url.clone()), || {
-            // Act
-            let loaded_config = read_config().expect("could not read config");
+        temp_env::with_vars(
+            [
+                ("VL__DATABASE_URL", Some(db_url.clone())),
+                ("CONFIG_FILE", Some(Faker.fake())),
+            ],
+            || {
+                // Act
+                let loaded_config = read_config().expect("could not read config");
 
-            // Assert
-            assert_eq!(
-                loaded_config,
-                Configuration {
-                    database: DatabaseConfig { url: db_url },
-                    ..Default::default()
-                }
-            )
-        })
+                // Assert
+                assert_eq!(
+                    loaded_config,
+                    Configuration {
+                        database: DatabaseConfig { url: db_url },
+                        ..Default::default()
+                    }
+                )
+            },
+        )
     }
 
     #[test]
