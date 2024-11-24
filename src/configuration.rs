@@ -25,6 +25,20 @@ pub struct LoggingConfig {
     pub format: LogFormat,
 }
 
+impl std::fmt::Display for LogFormat {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                LogFormat::Compact => "compact",
+                LogFormat::Full => "full",
+                LogFormat::Pretty => "pretty",
+            }
+        )
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, fake::Dummy, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum LogLevel {
@@ -206,6 +220,7 @@ mod config_tests {
         // Arrange
         let config = Faker.fake::<Configuration>();
 
+        // Configure some temp config env vars with dummy values
         temp_env::with_vars(
             [
                 ("CONFIG_FILE", Some(Faker.fake())),
@@ -213,13 +228,18 @@ mod config_tests {
                 ("VL__SERVER_HOST", Some(config.server.host.to_string())),
                 ("VL__DATABASE_URL", Some(config.database.url.to_string())),
                 ("VL__LOG_LEVEL", Some(config.log.level.to_string())),
+                ("VL__LOG_FORMAT", Some(config.log.format.to_string())),
             ],
             || {
                 // Act
                 let loaded_config = read_config().expect("could not read config");
 
-                // Assert
-                assert_eq!(loaded_config, config);
+                // Assert - Values are loaded from
+                assert_eq!(loaded_config.server.port, config.server.port);
+                assert_eq!(loaded_config.server.host, config.server.host);
+                assert_eq!(loaded_config.database.url, config.database.url);
+                assert_eq!(loaded_config.log.level, config.log.level);
+                assert_eq!(loaded_config.log.format, config.log.format);
             },
         )
     }
